@@ -6,20 +6,45 @@ namespace PoeAcolyte.UI
 {
     public class FrameControl : Control
     {
+        public string Description
+        {
+            get => _lblDescription.Text;
+            set => _lblDescription.Text = value;
+        }
+
+        private Label _lblDescription;
         public FrameControl()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
             DoubleBuffered = true;
             ResizeRedraw = true;
             BackColor = Color.Transparent;
-            Label lbl = new Label()
+            _lblDescription = new Label()
             { // TODO cleanup change bounds based on frame size and center?
                 Size = new Size(50,20),
                 Location = new Point(15, 15),
-                Text = "Stash Tab Bounds",
-                BackColor = Color.White
+                Text = "Description",
+                BackColor = Color.White,
+                TextAlign = ContentAlignment.MiddleCenter
             };
-            Controls.Add(lbl);
+            Resize += OnResize;
+            Controls.Add(_lblDescription);
+            
+        }
+
+        private void OnResize(object sender, EventArgs e)
+        {
+            _lblDescription.Size = new Size()
+            {
+                Width = Width - 30,
+                Height = Height - 30
+            };
+            // set text to a maximum size that should still fit into description box
+            var w = 2 * Width / _lblDescription.Text.Length;
+            var h = 2 * Height / _lblDescription.Text.Length ;
+            var x = w > h ? h : w;
+            _lblDescription.Font = new Font("Calibri", x, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
+
         }
 
         protected override void OnPaint(PaintEventArgs e)

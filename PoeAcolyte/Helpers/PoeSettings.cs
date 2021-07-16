@@ -9,7 +9,7 @@ using PoeAcolyte.UI;
 
 namespace PoeAcolyte.Helpers
 {
-    public class Settings
+    public class PoeSettings
     {
         public struct FrameProps
         {
@@ -28,7 +28,7 @@ namespace PoeAcolyte.Helpers
         private const string DEFAULTPOECLIENTLOG =
             @"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\test.txt";
 
-        public static Settings Default()
+        public static PoeSettings Default()
         {
             return new()
             {
@@ -49,12 +49,14 @@ namespace PoeAcolyte.Helpers
             _stashTabFrame = new FrameControl()
             {
                 Location = StashTab.Location,
-                Size = StashTab.Size
+                Size = StashTab.Size,
+                Description = "Stash Tab"
             };
             _tradeFrame = new FrameControl()
             {
                 Location = Trades.Location,
-                Size = Trades.Size
+                Size = Trades.Size,
+                Description = "Trade Notifications"
             };
             // update our properties when the frame is resized
             _stashTabFrame.Resize += (sender, args) =>
@@ -107,13 +109,13 @@ namespace PoeAcolyte.Helpers
         /// Load class from "settings.json"
         /// </summary>
         /// <returns></returns>
-        public static Settings Load()
+        public static PoeSettings Load()
         {
             try
             {
                 return !File.Exists(DEFAULTFILENAME)
-                    ? new Settings()
-                    : JsonSerializer.Deserialize<Settings>(File.ReadAllText(DEFAULTFILENAME));
+                    ? Default()
+                    : JsonSerializer.Deserialize<PoeSettings>(File.ReadAllText(DEFAULTFILENAME));
             }
             catch (Exception e)
             {
