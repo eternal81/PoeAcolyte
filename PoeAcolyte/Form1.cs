@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using PoeAcolyte.Service;
 
 namespace PoeAcolyte
 {
@@ -15,6 +16,7 @@ namespace PoeAcolyte
         public Form1()
         {
             InitializeComponent();
+
         }
     }
 }
