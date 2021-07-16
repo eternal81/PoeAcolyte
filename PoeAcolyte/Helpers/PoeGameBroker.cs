@@ -61,6 +61,7 @@ namespace PoeAcolyte.Helpers
             tradeControl.Disposed += (o, args) =>
             {
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
+                TradeControls.Remove(tradeControl);
             };
             TradeControls.Add(tradeControl);
             TradePanel.Controls.Add(tradeControl.GetUserControl);

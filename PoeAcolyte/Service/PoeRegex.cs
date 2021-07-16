@@ -8,31 +8,36 @@ namespace PoeAcolyte.Service
     public static class PoeRegex
     {
         /// <summary>
-        /// REGEX to determine if @From is found (meaning a whisper from someone)
-        /// <value>From</value>
+        /// REGEX to determine if @From is found (meaning a whisper from someone) <br></br>
+        /// (?:From|De|От кого|จาก|Von|Desde|수신|來自) (?&lt;Player&gt;.*?): (?&lt;Other&gt;.*)
+        /// <value>Player, Other</value>
         /// </summary>
-        public static readonly Regex WhisperFrom = new Regex(@"@(?:From|De|От кого|จาก|Von|Desde|수신|來自) (?<From>.*?): (?<Other>.*)");
+        public static readonly Regex WhisperFrom = new Regex(@"@(?:From|De|От кого|จาก|Von|Desde|수신|來自) (?<Player>.*?): (?<Other>.*)");
         
         /// <summary>
-        /// REGEX to determine if @To is found (meaning a whisper to someone)
-        /// <value>To</value> 
+        /// REGEX to determine if @To is found (meaning a whisper to someone) <br></br>
+        /// (?:To|À|An|Para|Кому|ถึง|발신|向) (?&lt;Player&gt;.*?): (?&lt;Other&gt;.*)
+        /// <value>Player, Other</value> 
         /// </summary>
-        public static readonly Regex WhisperTo = new Regex(@"@(?:To|À|An|Para|Кому|ถึง|발신|向) (?<To>.*?): (?<Other>.*)");
+        public static readonly Regex WhisperTo = new Regex(@"@(?:To|À|An|Para|Кому|ถึง|발신|向) (?<Player>.*?): (?<Other>.*)");
         
         /// <summary>
-        /// REGEX for guild and player name
+        /// REGEX for guild and player name <br></br>
+        /// &lt;(?&lt;Guild&gt;.*?)&gt; (?&lt;Player&gt;.*?): 
         /// <value>Guild, Player</value>
         /// </summary>
         public static readonly Regex Guild = new Regex(@"<(?<Guild>.*?)> (?<Player>.*?): ");
 
         /// <summary>
-        /// Regex used as a catch all
+        /// Regex used as a catch all <br></br>
+        /// (.*?)] (?&lt;Message&gt;.*)
         /// <value>Message</value>
         /// </summary>
         public static readonly Regex SystemMessage = new Regex(@"(.*?)] (?<Message>.*)");
         
         /// <summary>
-        /// REGEX for Regular Priced trades
+        /// REGEX for Regular Priced trades - will need to parse <see cref="StashTabList"/><br></br>
+        /// (.*)Hi, I would like to buy your (?&lt;Item&gt;.*) listed for (?&lt;PriceAmount&gt;\d+) (?&lt;PriceUnit&gt;.*) in (?&lt;League&gt;.*?)\(
         /// <value>Item, PriceAmount, PriceUnit, League</value>
         /// </summary>
         public static readonly Regex[] PricedTradeList =
@@ -50,8 +55,9 @@ namespace PoeAcolyte.Service
         };
 
         /// <summary>
-        /// REGEX for stash tab info
-        /// <value>StashTab, Left, Top</value>
+        /// REGEX for stash tab info <br></br>
+        /// \(stash tab &quot;&quot;(?&lt;StashTab&gt;.*)&quot;&quot;; position: left (?&lt;Left&gt;\d+), top (?&lt;Top&gt;\d+)\)(?&lt;Other&gt;.*)
+        /// <value>StashTab, Left, Top, Other</value>
         /// </summary>
         public static readonly Regex[] StashTabList =
         {
@@ -68,7 +74,8 @@ namespace PoeAcolyte.Service
         };
 
         /// <summary>
-        /// Regex for unpriced trades (excluding bulk)
+        /// Regex for unpriced trades (excluding bulk) - will need to parse <see cref="StashTabList"/><br></br>
+        /// (.*)Hi, I would like to buy your (?&lt;Item&gt;.*) in (?&lt;League&gt;.*?)\(
         /// <value>Item, League</value>
         /// </summary>
         public static readonly Regex[] UnpricedTradeList =
@@ -86,8 +93,9 @@ namespace PoeAcolyte.Service
         };
 
         /// <summary>
-        /// REGEX for bulk (currency) trades
-        /// <value>(int)SellAmount, SellUnits, (int)BuyAmount, BuyUnits, League</value>
+        /// REGEX for bulk (currency) trades - will not contain stash info<br></br>
+        /// (.*)Hi, I&apos;d like to buy your (?&lt;SellAmount&gt;\d+) (?&lt;SellUnits&gt;.*?) for my (?&lt;BuyAmount&gt;\d+) (?&lt;BuyUnits&gt;.*?) in (?&lt;League&gt;.*).(?&lt;Other&gt;.*)
+        /// <value>(int)SellAmount, SellUnits, (int)BuyAmount, BuyUnits, League, Other</value>
         /// </summary>
         public static readonly Regex[] BulkTradeList =
         {
@@ -104,7 +112,8 @@ namespace PoeAcolyte.Service
         };
 
         /// <summary>
-        /// Regex if player joins an area
+        /// Regex if player joins an area <br></br>
+        /// (.*) : (?&lt;Player&gt;.*?) has joined the area.*
         /// <value>Player</value>
         /// </summary>
         public static readonly Regex[] AreaJoinedList =
@@ -121,7 +130,8 @@ namespace PoeAcolyte.Service
         };
 
         /// <summary>
-        /// Regex if a player leaves an area
+        /// Regex if a player leaves an area <br></br>
+        /// (.*) : (?&lt;Player&gt;.*?) has left the area.*
         /// <value>Player</value>
         /// </summary>
         public static readonly Regex[] AreaLeftList =
@@ -138,7 +148,8 @@ namespace PoeAcolyte.Service
         };
 
         /// <summary>
-        /// Regex if you enter an area
+        /// Regex if you enter an area <br></br>
+        /// (.*) : You have entered (?&lt;Area&gt;.*?).
         /// <value>Area</value>
         /// </summary>
         public static readonly Regex[] YouJoinList =

@@ -159,7 +159,7 @@ namespace PoeAcolyte.UI
 
             toolTips.SetToolTip(lblInfo, ActiveLogEntry.League);
             playersMenuItem.Text = ActiveLogEntry.Player;
-            lblInfo.ContextMenuStrip = ContextMenuStrip;
+            lblInfo.ContextMenuStrip = contextMenuStrip;
         }
 
         public void UpdateActiveTrade(PoeLogEntry entry)
