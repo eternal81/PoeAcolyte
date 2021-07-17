@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace PoeAcolyte.UI
 {
-    public class FrameControl : Control
+    public sealed class FrameControl : Control
     {
         public string Description
         {
@@ -20,7 +20,7 @@ namespace PoeAcolyte.UI
             ResizeRedraw = true;
             BackColor = Color.Transparent;
             _lblDescription = new Label()
-            { // TODO cleanup change bounds based on frame size and center?
+            { 
                 Size = new Size(50,20),
                 Location = new Point(15, 15),
                 Text = "Description",

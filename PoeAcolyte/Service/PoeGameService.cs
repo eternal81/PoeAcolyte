@@ -11,8 +11,16 @@ namespace PoeAcolyte.Service
         private const int SleepInterval = 5000;
         private Thread _search;
         private Process _poeProcess;
-        
-        public EventHandler<bool> PoeConnectEventHandler;
+        public class ConnectEventArgs : EventArgs
+        {
+            public bool IsConnected { get; set; }
+
+            public ConnectEventArgs(bool value)
+            {
+                IsConnected = value;
+            }
+        }
+        public event EventHandler<ConnectEventArgs> PoeConnected;
         public PoeLogReader LogReader { get; set; }
         public bool IsPoeFound => _poeProcess == null;
         
@@ -27,7 +35,7 @@ namespace PoeAcolyte.Service
         {
             //if (!IsPoeFound) SearchForPoe(null, null);
             _poeProcess = null;
-            PoeConnectEventHandler?.Invoke(this, false); 
+            PoeConnected?.Invoke(this, new ConnectEventArgs(false)); 
             _search = new Thread(CheckForPoeInstance)
                 {IsBackground = true, Name = "POE Window Monitor", Priority = ThreadPriority.Lowest};
             _search.Start();
@@ -36,7 +44,7 @@ namespace PoeAcolyte.Service
         public void Stop()
         {
             _poeProcess = null;
-            PoeConnectEventHandler?.Invoke(this, false); 
+            PoeConnected?.Invoke(this, new ConnectEventArgs(false)); 
         }
             /// <summary>
         /// Background function to check if POE is running. Saves Process if found
@@ -54,7 +62,7 @@ namespace PoeAcolyte.Service
 
                 _poeProcess.EnableRaisingEvents = true;
                 _poeProcess.Exited += SearchForPoe; //go back to searching for poe if it is closed
-                PoeConnectEventHandler?.Invoke(this, true);
+                PoeConnected?.Invoke(this, new ConnectEventArgs(true));
             }
         }
 
@@ -72,7 +80,7 @@ namespace PoeAcolyte.Service
         /// Set POE client to foreground if Process is not null
         /// </summary>
         /// <returns>true if successful, false if no process</returns>
-        public bool FocusPoe()
+        private bool FocusPoe()
         {
             if (_poeProcess == null) return false;
             WIN32.SetForegroundWindow(GetPoeProcess().MainWindowHandle);
@@ -124,7 +132,8 @@ namespace PoeAcolyte.Service
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
         }
-        public bool SendCommandToClient(string command, int waitTime = 50)
+
+        private bool SendCommandToClient(string command, int waitTime = 50)
         {
             if (!FocusPoe()) return false;
             WindowsInput.Simulate.Events()
@@ -148,7 +157,7 @@ namespace PoeAcolyte.Service
         /// </list>
         /// </summary>
         /// <returns>Process if program found, null if not</returns>
-        private Process GetPoeProcess()
+        private static Process GetPoeProcess()
         {
             var processes = Process.GetProcesses();
             // var linqProcesses =

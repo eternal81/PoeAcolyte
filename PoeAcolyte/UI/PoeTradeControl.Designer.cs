@@ -155,13 +155,9 @@ namespace PoeAcolyte.UI
         private System.Windows.Forms.ToolStripMenuItem closeMenuItem;
         private System.Windows.Forms.ToolStripMenuItem playersMenuItem;
         private System.Windows.Forms.ToolStripMenuItem activePlayerMenuItem;
-
         private System.Windows.Forms.Label lblInfo;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
         private System.Windows.Forms.ToolTip toolTips;
-
-        private System.Windows.Forms.Label label1;
-
         private System.Windows.Forms.PictureBox pbPriceUnit;
         private System.Windows.Forms.Label lblPriceAmount;
 

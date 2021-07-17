@@ -13,6 +13,9 @@ namespace PoeAcolyte.Helpers
     /// </summary>
     public class PoeGameBroker
     {
+        #region Members
+
+
         /// <summary>
         /// Broker used to save/load/modify the session to session settings
         /// </summary>
@@ -21,7 +24,7 @@ namespace PoeAcolyte.Helpers
         /// <summary>
         /// Control container (FlowLayoutPanel) to populate with trade requests
         /// </summary>
-        public Control TradePanel { get; set; }
+        private Control TradePanel { get; set; }
 
         /// <summary>
         /// Broker to handle interaction with the POE client
@@ -37,12 +40,15 @@ namespace PoeAcolyte.Helpers
         /// List of active trades (used for routing log entries)
         /// </summary>
         private List<IPoeTradeControl> TradeControls { get; } = new();
+                
+
+        #endregion
 
         /// <summary>
         /// Default constructor. Loads in <see cref="PoeSettings"/>, <see cref="PoeGameService"/>,
         /// <see cref="PoeLogReader"/> and hooks to log events
         /// </summary>
-        public PoeGameBroker()
+        private PoeGameBroker()
         {
             Settings = PoeSettings.Load();
             Service = new PoeGameService();
@@ -52,6 +58,9 @@ namespace PoeAcolyte.Helpers
             LogReader.Whisper += LogReaderOnWhisper;
             LogReader.YouJoin += LogReaderOnYouJoin;
             LogReader.UnpricedTrade += LogReaderOnTrade;
+            
+            // Automatically search client log if POE is open
+            Service.PoeConnected += (_, args) => {LogReader.IsRunning = args.IsConnected;};
         }
 
         /// <summary>
