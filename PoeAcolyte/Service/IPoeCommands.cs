@@ -43,7 +43,11 @@
             /// <summary>
             /// /metamorph
             /// </summary>
-            Metamorph
+            Metamorph,
+            /// <summary>
+            /// /whois
+            /// </summary>
+            WhoIs
         }
 
         /// <summary>

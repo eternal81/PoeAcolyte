@@ -107,6 +107,9 @@ namespace PoeAcolyte.Service
                 case IPoeCommands.CommandType.Hideout:
                     SendCommandToClient("/hideout " + player);
                     break;
+                case IPoeCommands.CommandType.WhoIs:
+                    SendCommandToClient("/whois " + player);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }

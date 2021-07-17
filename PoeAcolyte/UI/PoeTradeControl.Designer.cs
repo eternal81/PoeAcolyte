@@ -43,7 +43,7 @@ namespace PoeAcolyte.UI
             this.tyglMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.playersMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.activePlayerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.whoIsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTips = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize) (this.pbPriceUnit)).BeginInit();
             this.contextMenuStrip.SuspendLayout();
@@ -77,10 +77,11 @@ namespace PoeAcolyte.UI
             this.lblInfo.Size = new System.Drawing.Size(152, 51);
             this.lblInfo.TabIndex = 2;
             this.lblInfo.Text = "999";
+            this.lblInfo.Click += new System.EventHandler(this.lblInfo_Click);
             // 
             // contextMenuStrip
             // 
-            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {this.declineMenuItem, this.waitMenuItem, this.inviteMenuItem, this.tradeMenuItem, this.tyglMenuItem, this.closeMenuItem, this.playersMenuItem, this.activePlayerMenuItem});
+            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {this.declineMenuItem, this.waitMenuItem, this.inviteMenuItem, this.tradeMenuItem, this.tyglMenuItem, this.closeMenuItem, this.playersMenuItem, this.whoIsMenuItem});
             this.contextMenuStrip.Name = "contextMenuStrip";
             this.contextMenuStrip.Size = new System.Drawing.Size(143, 180);
             // 
@@ -126,11 +127,11 @@ namespace PoeAcolyte.UI
             this.playersMenuItem.Size = new System.Drawing.Size(142, 22);
             this.playersMenuItem.Text = "Players";
             // 
-            // activePlayerMenuItem
+            // whoIsMenuItem
             // 
-            this.activePlayerMenuItem.Name = "activePlayerMenuItem";
-            this.activePlayerMenuItem.Size = new System.Drawing.Size(142, 22);
-            this.activePlayerMenuItem.Text = " ";
+            this.whoIsMenuItem.Name = "whoIsMenuItem";
+            this.whoIsMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.whoIsMenuItem.Text = "WhoIs";
             // 
             // PoeTradeControl
             // 
@@ -147,6 +148,8 @@ namespace PoeAcolyte.UI
             this.ResumeLayout(false);
         }
 
+        private System.Windows.Forms.ToolStripMenuItem whoIsMenuItem;
+
         private System.Windows.Forms.ToolStripMenuItem declineMenuItem;
         private System.Windows.Forms.ToolStripMenuItem waitMenuItem;
         private System.Windows.Forms.ToolStripMenuItem inviteMenuItem;
@@ -154,7 +157,6 @@ namespace PoeAcolyte.UI
         private System.Windows.Forms.ToolStripMenuItem tyglMenuItem;
         private System.Windows.Forms.ToolStripMenuItem closeMenuItem;
         private System.Windows.Forms.ToolStripMenuItem playersMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem activePlayerMenuItem;
         private System.Windows.Forms.Label lblInfo;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
         private System.Windows.Forms.ToolTip toolTips;

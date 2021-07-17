@@ -11,6 +11,9 @@ namespace PoeAcolyte
     {
         private static Logger _logger;
 
+        /// <summary>
+        /// Default logging for POE Acolyte
+        /// </summary>
         public static Logger Log
         {
             get
