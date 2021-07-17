@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Timers;
@@ -49,7 +48,7 @@ namespace PoeAcolyte.Service
             _lastLogIndex = FindLogEOF(); // Set our last index as end of file (so we don't scan entire history)
             _logTimer = new Timer()
             {
-                Interval = 500,
+                Interval = 1000,
                 Enabled = true
             };
             _logTimer.Elapsed += LogTimerOnElapsed;
@@ -72,7 +71,7 @@ namespace PoeAcolyte.Service
             }
             catch (Exception exception)
             {
-                Debug.Print(exception.Message);
+                Program.Log.Debug("PoeLogReader (LogTimeOnElapsed) - Exception: {exception}",exception.Message);
             }
         }
         
@@ -89,7 +88,7 @@ namespace PoeAcolyte.Service
             }
             catch (Exception e)
             {
-                Debug.Print(e.Message);
+                Program.Log.Debug("PoeLogReader (FindLogEof) - Exception: {exception}",e.Message);
                 return -1;
             }
         }

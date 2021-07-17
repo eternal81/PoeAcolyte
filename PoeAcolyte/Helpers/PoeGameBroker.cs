@@ -60,7 +60,11 @@ namespace PoeAcolyte.Helpers
             LogReader.UnpricedTrade += LogReaderOnTrade;
             
             // Automatically search client log if POE is open
-            Service.PoeConnected += (_, args) => {LogReader.IsRunning = args.IsConnected;};
+            Service.PoeConnected += (_, args) =>
+            {
+                Program.Log.Verbose("PoeGameBroker - Client {conn}", args.IsConnected ? "connected":"disconnected");
+                LogReader.IsRunning = args.IsConnected;
+            };
         }
 
         /// <summary>

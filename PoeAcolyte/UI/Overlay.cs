@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using PoeAcolyte.Helpers;
+using Serilog;
 
 namespace PoeAcolyte.UI
 {
@@ -13,12 +14,12 @@ namespace PoeAcolyte.UI
             InitializeComponent();
             _broker = new PoeGameBroker(tradesPanel);
             _broker.RefreshUI();
-
-
+            Program.Log.Verbose("Overlay - POE Acolyte started");
         }
 
         private void OnClose(object sender, EventArgs e)
         {
+            Program.Log.Verbose("Overlay - POE Acolyte exited");
             Application.Exit();
         }
 

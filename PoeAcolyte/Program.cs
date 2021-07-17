@@ -1,14 +1,33 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using PoeAcolyte.UI;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 
 namespace PoeAcolyte
 {
     static class Program
     {
+        private static Logger _logger;
+
+        public static Logger Log
+        {
+            get
+            {
+                if (_logger is null)
+                {
+                    _logger ??= new LoggerConfiguration()
+                        .WriteTo.File("testinfo.txt")
+                        .MinimumLevel.Verbose()
+                        .Enrich.FromLogContext()
+                        .CreateLogger();
+                }
+
+                return _logger;
+            }
+        }
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
