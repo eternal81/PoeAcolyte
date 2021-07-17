@@ -1,79 +1,78 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
+using System.Timers;
 using WindowsInput.Events;
 
 namespace PoeAcolyte.Service
 {
+    /// <summary>
+    /// POE game monitoring service. Detects when client is opened and handles sending input to client
+    /// </summary>
     public class PoeGameService : IPoeCommands
     {
-        private const int SleepInterval = 5000;
-        private Thread _search;
-        private Process _poeProcess;
+        /// <summary>
+        /// EventArgs used for poe client being open or closed
+        /// </summary>
         public class ConnectEventArgs : EventArgs
         {
-            public bool IsConnected { get; set; }
+            /// <summary>
+            /// Is client open or closed
+            /// </summary>
+            public bool IsConnected { get; }
 
+            /// <summary>
+            /// Default constructor
+            /// </summary>
+            /// <param name="value">bool if client is open</param>
             public ConnectEventArgs(bool value)
             {
                 IsConnected = value;
             }
         }
+
+        private Process _poeProcess;
+        private readonly Timer _searchTimer;
         public event EventHandler<ConnectEventArgs> PoeConnected;
-        public PoeLogReader LogReader { get; set; }
         public bool IsPoeFound => _poeProcess == null;
-        
+
         /// <summary>
         /// Default Constructor
         /// </summary>
         public PoeGameService()
         {
-        }
-
-        public void Start()
-        {
-            //if (!IsPoeFound) SearchForPoe(null, null);
-            _poeProcess = null;
-            PoeConnected?.Invoke(this, new ConnectEventArgs(false)); 
-            _search = new Thread(CheckForPoeInstance)
-                {IsBackground = true, Name = "POE Window Monitor", Priority = ThreadPriority.Lowest};
-            _search.Start();
-        }
-
-        public void Stop()
-        {
-            _poeProcess = null;
-            PoeConnected?.Invoke(this, new ConnectEventArgs(false)); 
-        }
-            /// <summary>
-        /// Background function to check if POE is running. Saves Process if found
-        /// </summary>
-        private void CheckForPoeInstance()
-        {
-            while (_poeProcess == null )
+            _searchTimer = new Timer()
             {
-                Debug.Print("Searching for POE");
-
-                _poeProcess = GetPoeProcess();
-                Thread.Sleep(SleepInterval);
-
-                if (_poeProcess == null) continue;
-
-                _poeProcess.EnableRaisingEvents = true;
-                _poeProcess.Exited += SearchForPoe; //go back to searching for poe if it is closed
-                PoeConnected?.Invoke(this, new ConnectEventArgs(true));
-            }
+                Interval = 5000,
+                Enabled = true
+            };
+            _searchTimer.Elapsed += SearchTimerOnElapsed;
         }
 
         /// <summary>
-        /// Event Handler when POE window is closed 
+        /// Periodic check if the POE client is open or closed. <br></br>
+        /// Invokes <see cref="PoeConnected"/> if found or when closed
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void SearchForPoe(object sender, EventArgs e)
+        /// <param name="sender">not used</param>
+        /// <param name="e">not used</param>
+        private void SearchTimerOnElapsed(object sender, ElapsedEventArgs e)
         {
-            Start();
+            Debug.Print("Searching for POE");
+
+            _poeProcess = GetPoeProcess();
+            if (_poeProcess == null) return;
+            _poeProcess.EnableRaisingEvents = true;
+            
+            //go back to searching for poe if it is closed
+            _poeProcess.Exited += (o, args) =>
+            {
+                _searchTimer.Enabled = true;
+                PoeConnected?.Invoke(this, new ConnectEventArgs(false));
+                Debug.Print("Client is closed");
+            };
+            _searchTimer.Enabled = false;
+            PoeConnected?.Invoke(this, new ConnectEventArgs(true));
+            Debug.Print("Client is opened");
         }
 
         /// <summary>
@@ -112,6 +111,7 @@ namespace PoeAcolyte.Service
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
         }
+
         public void SendPoeCommand(IPoeCommands.CommandType type)
         {
             switch (type)
@@ -144,7 +144,7 @@ namespace PoeAcolyte.Service
                 ;
             return true;
         }
-        
+
         /// <summary>
         /// Searches Process stack for a match of:
         /// <list type="table">
@@ -174,6 +174,5 @@ namespace PoeAcolyte.Service
             var result = linqProcesses.ToList();
             return result.Any() ? result.First() : null;
         }
-
     }
 }
