@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Timers;
 using PoeAcolyte.DataTypes;
 
 namespace PoeAcolyte.Service
 {
     public class PoeLogReader : IPoeLogReader
     {
-         #region Events
+        #region IPoeLogReader
 
-         public event EventHandler<IPoeLogReader.PoeLogEventArgs> LogEntry;
+        public event EventHandler<IPoeLogReader.PoeLogEventArgs> LogEntry;
         public event EventHandler<IPoeLogReader.PoeLogEventArgs> Whisper;
         public event EventHandler<IPoeLogReader.PoeLogEventArgs> PricedTrade;
         public event EventHandler<IPoeLogReader.PoeLogEventArgs> UnpricedTrade;
@@ -21,76 +21,81 @@ namespace PoeAcolyte.Service
         public event EventHandler<IPoeLogReader.PoeLogEventArgs> AreaLeft;
         public event EventHandler<IPoeLogReader.PoeLogEventArgs> YouJoin;
         public event EventHandler<IPoeLogReader.PoeLogEventArgs> SystemMessage;
+        public bool IsRunning
+        {
+            get => _logTimer.Enabled;
+            set
+            {
+                // reset to end of file so we don't get bombarded by entries sent while idle
+                _lastLogIndex = FindLogEOF(); 
+                _logTimer.Enabled = value;
+            }
+        }
 
         #endregion
 
         private readonly string _filePath;
-        private const string DefaultPath = @"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\Client.txt";
+        private const string DEFAULT_PATH = @"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\Client.txt";
         private long _lastLogIndex;
+        private readonly Timer _logTimer;
 
         /// <summary>
         /// Default constructor
         /// </summary>
         /// <param name="filePath">use default installation file path if alternate is not specified</param>
-        public PoeLogReader(string filePath = DefaultPath)
+        public PoeLogReader(string filePath = DEFAULT_PATH)
         {
             _filePath = filePath;
             _lastLogIndex = FindLogEOF(); // Set our last index as end of file (so we don't scan entire history)
-            MonitorClientLog(); // automatically start monitoring
+            _logTimer = new Timer()
+            {
+                Interval = 500,
+                Enabled = true
+            };
+            _logTimer.Elapsed += LogTimerOnElapsed;
         }
 
         /// <summary>
-        /// Scans Client.log file
+        /// Periodic inspection of the client.txt file for changes
         /// </summary>
-        /// <returns>Number of line items (minus 1)</returns>
+        /// <param name="sender">not used</param>
+        /// <param name="e">not used</param>
+        private void LogTimerOnElapsed(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                var newLines = ReadNewLines();
+                foreach (var entry in newLines.Select(line => new PoeLogEntry(line)).Where(entry => entry.IsValid))
+                {
+                    OnNewLogEntry(entry);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.Print(exception.Message);
+            }
+        }
+        
+        /// <summary>
+        /// Scans Client.txt file
+        /// </summary>
+        /// <returns>Number of line items (minus 1) or -1 on exception</returns>
         private long FindLogEOF()
         {
             try
             {
-                var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                var retValue = file.Length - 1;
-                file.Close();
-                return retValue;
+                using var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                return file.Length - 1;
             }
             catch (Exception e)
             {
                 Debug.Print(e.Message);
                 return -1;
             }
-            
         }
 
         /// <summary>
-        /// Async monitor chat log for additions; invoke events on new entries
-        /// </summary>
-        /// <param name="delay">default delay</param>
-        private async void MonitorClientLog(int delay = 500)
-        {
-            while (true)
-            {
-                var newLines = new List<string>();
-                do
-                {
-                    try
-                    {
-                        await Task.Delay(delay);
-                        newLines = ReadNewLines();
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Print(e.Message);
-                    }
-                } while (!newLines.Any()); // loop until new lines found
-
-                foreach (var entry in newLines.Select(line => new PoeLogEntry(line)).Where(entry => entry.IsValid))
-                {
-                    OnNewLogEntry(entry);
-                }
-            }
-        } // TODO implement cancellation token?
-
-        /// <summary>
-        /// Event Handler for new log entries
+        /// Event Invoker for new log entries
         /// </summary>
         /// <param name="entry">entry to be passed on as EventArgs</param>
         /// <exception cref="ArgumentOutOfRangeException">message type not specified</exception>
@@ -134,41 +139,31 @@ namespace PoeAcolyte.Service
         /// Find new entries in client log
         /// </summary>
         /// <returns>new entries</returns>
-        private List<string> ReadNewLines()
+        private IEnumerable<string> ReadNewLines()
         {
             var lines = new List<string>();
             var currentPosition = _lastLogIndex;
             _lastLogIndex = FindLogEOF();
 
-            if (currentPosition >= _lastLogIndex)
-            {
-                return lines; //no new entries
-            }
+            if (currentPosition >= _lastLogIndex) return lines; //no new entries
 
-            var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             file.Position = currentPosition;
-            var reader = new StreamReader(file);
+            using var reader = new StreamReader(file);
 
             while (!reader.EndOfStream)
             {
                 var line = reader.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    lines.Add(line); //RemoveSpecialChars(line));
-                }
+                if (!string.IsNullOrEmpty(line)) lines.Add(line);
             }
-
-            // cleanup
-            reader.Close();
-            file.Close();
 
             return lines;
         }
 
         /// <summary>
-        /// Used for debugging and testing
+        /// Used for debugging and testing. Simulates an event fire on provided value
         /// </summary>
-        /// <param name="raw"></param>
+        /// <param name="raw">Properly formatted log entry used in client.txt file</param>
         public void ManualFire(string raw)
         {
             OnNewLogEntry(new PoeLogEntry(raw));

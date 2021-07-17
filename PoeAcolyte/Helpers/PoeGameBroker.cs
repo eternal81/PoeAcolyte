@@ -7,14 +7,41 @@ using PoeAcolyte.UI;
 
 namespace PoeAcolyte.Helpers
 {
+    /// <summary>
+    /// Used to broker events from the client log, interact with the POE client, manage trade requests/controls
+    /// and load/save/modify settings
+    /// </summary>
     public class PoeGameBroker
     {
-        public PoeGameService Service { get; set; }
-        public PoeLogReader LogReader { get; set; }
-        public PoeSettings Settings { get; set; }
+        /// <summary>
+        /// Broker used to save/load/modify the session to session settings
+        /// </summary>
+        public PoeSettings Settings { get; }
+
+        /// <summary>
+        /// Control container (FlowLayoutPanel) to populate with trade requests
+        /// </summary>
         public Control TradePanel { get; set; }
-        public List<IPoeTradeControl> TradeControls { get; set; } = new();
-        
+
+        /// <summary>
+        /// Broker to handle interaction with the POE client
+        /// </summary>
+        private PoeGameService Service { get; }
+
+        /// <summary>
+        /// Broker to handle interaction with the POE logs
+        /// </summary>
+        private PoeLogReader LogReader { get; }
+
+        /// <summary>
+        /// List of active trades (used for routing log entries)
+        /// </summary>
+        private List<IPoeTradeControl> TradeControls { get; } = new();
+
+        /// <summary>
+        /// Default constructor. Loads in <see cref="PoeSettings"/>, <see cref="PoeGameService"/>,
+        /// <see cref="PoeLogReader"/> and hooks to log events
+        /// </summary>
         public PoeGameBroker()
         {
             Settings = PoeSettings.Load();
@@ -27,17 +54,34 @@ namespace PoeAcolyte.Helpers
             LogReader.UnpricedTrade += LogReaderOnTrade;
         }
 
+        /// <summary>
+        /// Constructor that sets up <see cref="TradePanel"/>
+        /// </summary>
+        /// <param name="tradePanel"><see cref="TradePanel"/> to use</param>
+        public PoeGameBroker(Control tradePanel) : this()
+        {
+            TradePanel = tradePanel;
+        }
 
-        private void LogReaderOnYouJoin(object? sender, IPoeLogReader.PoeLogEventArgs e)
+        /// <summary>
+        /// Event handler for <see cref="IPoeLogReader.YouJoin"/>
+        /// </summary>
+        /// <param name="sender">not useful / null</param>
+        /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
+        private void LogReaderOnYouJoin(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
             foreach (var tradeControl in TradeControls)
             {
                 tradeControl.IsBusy = !e.LogEntry.Area.Contains("Hideout");
             }
-            
         }
 
-        private void LogReaderOnWhisper(object? sender, IPoeLogReader.PoeLogEventArgs e)
+        /// <summary>
+        /// Event handler for <see cref="IPoeLogReader.Whisper"/>
+        /// </summary>
+        /// <param name="sender">not useful / null</param>
+        /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
+        private void LogReaderOnWhisper(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
             // Only handle incoming whispers
             if (!e.LogEntry.Incoming) return;
@@ -47,18 +91,24 @@ namespace PoeAcolyte.Helpers
             }
         }
 
-        public void LogReaderOnTrade(object? sender, IPoeLogReader.PoeLogEventArgs e)
+        /// <summary>
+        /// Event handler for <see cref="IPoeLogReader.PricedTrade"/>, <see cref="IPoeLogReader.BulkTrade"/>,
+        /// <see cref="IPoeLogReader.UnpricedTrade"/>
+        /// </summary>
+        /// <param name="sender">not useful / null</param>
+        /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
+        private void LogReaderOnTrade(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
             // Only handle incoming trade request
             if (!e.LogEntry.Incoming) return;
-            
+
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
 
             // Brand new request
             IPoeTradeControl tradeControl = new PoeTradeControl(e.LogEntry, Service);
-       
-            tradeControl.Disposed += (o, args) =>
+
+            tradeControl.Disposed += (_, _) =>
             {
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
                 TradeControls.Remove(tradeControl);
@@ -67,11 +117,15 @@ namespace PoeAcolyte.Helpers
             TradePanel.Controls.Add(tradeControl.GetUserControl);
         }
 
+        /// <summary>
+        /// See if item already has an existing trade control
+        /// </summary>
+        /// <param name="e"><see cref="PoeLogEntry"/> to compare against</param>
+        /// <returns>true if <see cref="TradeControls"/> contains the entry, false if not</returns>
         private bool DuplicateItem(PoeLogEntry e)
         {
             var bFound = false;
 
-            // TODO does this need to include the non active entries?
             var duplicates = TradeControls.Where(incoming =>
                 incoming.ActiveLogEntry.Item == e.Item &&
                 incoming.ActiveLogEntry.Top == e.Top &&
@@ -95,14 +149,15 @@ namespace PoeAcolyte.Helpers
         {
             LogReader.ManualFire(raw);
         }
-        
+
+        /// <summary>
+        /// Update control locations based on the settings (<see cref="TradePanel"/>)
+        /// </summary>
         public void RefreshUI()
         {
-            if (TradePanel is not null)
-            {
-                TradePanel.Location = Settings.Trades.Location;
-                TradePanel.Size = Settings.Trades.Size;
-            }
+            if (TradePanel is null) return;
+            TradePanel.Location = Settings.Trades.Location;
+            TradePanel.Size = Settings.Trades.Size;
         }
     }
 }
