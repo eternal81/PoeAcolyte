@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Helpers;
+using PoeAcolyte.Resources;
 using PoeAcolyte.Service;
 
 namespace PoeAcolyte.UI
@@ -76,6 +77,7 @@ namespace PoeAcolyte.UI
                 case IPoeTradeControl.TradeStatus.Invited:
                     if (ActiveTradeStatus == IPoeTradeControl.TradeStatus.AskedToWait)
                     {
+                        // TODO format correct response messages
                         Commands.SendPoeWhisper(ActiveLogEntry.Player, "Okay ready");
                     }
 
@@ -154,33 +156,11 @@ namespace PoeAcolyte.UI
         private void UpdateActiveTrade()
         {
             // TODO setup default league and compare to incoming trade request
-            if (ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade)
-            {
-                lblInfo.Text = $"{ActiveLogEntry.BuyPriceAmount} {ActiveLogEntry.BuyPriceUnits}\r\n" +
-                               $"{ActiveLogEntry.Player} ({ActiveLogEntry.PoeLogEntryType})\r\n" +
-                               $"{ActiveLogEntry.League}";
-
-                lblPriceAmount.Text = ActiveLogEntry.PriceAmount.ToString();
-                //pbPriceUnit.BackgroundImage = CurrencyImages.CurrencyRerollRare; // TODO add currency lookups
-            }
-            else if (ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade)
-            {
-                lblInfo.Text = $"{ActiveLogEntry.Item}\r\n" +
-                               $"({ActiveLogEntry.StashTab})\r\n" +
-                               $"Top: {ActiveLogEntry.Top}, Left: {ActiveLogEntry.Left}\r\n" +
-                               $"{ActiveLogEntry.Player} ({ActiveLogEntry.PoeLogEntryType})" +
-                               $"{ActiveLogEntry.League}";
-                lblPriceAmount.Text = ActiveLogEntry.PriceAmount.ToString();
-            }
-            else if (ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade)
-            {
-                lblInfo.Text = $"{ActiveLogEntry.Item}\r\n" +
-                               $"{ActiveLogEntry.Player} ({ActiveLogEntry.PoeLogEntryType} )\r\n" +
-                               $"{ActiveLogEntry.League}";
-                lblPriceAmount.Text = "???";
-            }
-
+            lblInfo.Text = ActiveLogEntry.ToString();
+            pbPriceUnit.Image = Converter.FromPriceString(ActiveLogEntry.PriceUnits);
+            lblPriceAmount.Text = ActiveLogEntry.PriceAmount > 0? ActiveLogEntry.PriceAmount.ToString(): "???";
             toolTips.SetToolTip(lblInfo, ActiveLogEntry.Raw);
+            
             // reset menu
             playersMenuItem.Text = "Player (reset)";
             waitMenuItem.Text = "Wait";

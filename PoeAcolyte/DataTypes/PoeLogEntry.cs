@@ -120,7 +120,7 @@ namespace PoeAcolyte.DataTypes
         /// <returns>true if matched false otherwise</returns>
         /// <value><see cref="Top"/>, <see cref="Left"/>, <see cref="StashTab"/>, <see cref="Other"/></value>
         private bool CheckStashTab()
-        {            
+        {
             foreach (Regex regex in PoeRegex.StashTabList)
             {
                 if (!regex.IsMatch(Raw)) continue;
@@ -144,14 +144,14 @@ namespace PoeAcolyte.DataTypes
             foreach (Regex regex in PoeRegex.PricedTradeList)
             {
                 if (!regex.IsMatch(Raw)) continue;
-                
+
                 Item = regex.Match(Raw).Groups["Item"].Value;
                 PriceAmount = int.Parse(regex.Match(Raw).Groups["PriceAmount"].Value);
                 PriceUnits = regex.Match(Raw).Groups["PriceUnit"].Value;
                 League = regex.Match(Raw).Groups["League"].Value;
-                
+
                 if (!CheckStashTab()) continue;
-                
+
                 return true;
             }
 
@@ -253,5 +253,32 @@ namespace PoeAcolyte.DataTypes
         }
 
         #endregion
+
+        /// <summary>
+        /// Reformat class field into easier to read format
+        /// </summary>
+        /// <returns>description with appropriate fields</returns>
+        public override string ToString()
+        {
+            return PoeLogEntryType switch
+            {
+                IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade =>
+                    $"{BuyPriceAmount} {BuyPriceUnits}\r\n" +
+                    $"{Player} ({PoeLogEntryType})\r\n" + $"{League}",
+                IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade =>
+                    $"{Item}\r\n" + $"({StashTab})\r\n" +
+                    $"Top: {Top}, Left: {Left}\r\n" +
+                    $"{Player} ({PoeLogEntryType})" + $"{League}",
+                IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade =>
+                    $"{Item}\r\n" + $"{Player} ({PoeLogEntryType} )\r\n" +
+                    $"{League}",
+                IPoeLogEntry.PoeLogEntryTypeEnum.Whisper => $"({Player} - {Other}",
+                IPoeLogEntry.PoeLogEntryTypeEnum.AreaJoined => $"{Player} joined",
+                IPoeLogEntry.PoeLogEntryTypeEnum.AreaLeft => $"{Player} left",
+                IPoeLogEntry.PoeLogEntryTypeEnum.YouJoin => $"You entered {Area}",
+                IPoeLogEntry.PoeLogEntryTypeEnum.SystemMessage => $"System Message - {Other}",
+                _ => ""
+            };
+        }
     }
 }

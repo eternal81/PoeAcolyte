@@ -52,9 +52,11 @@ namespace PoeAcolyte.UI
             // pbPriceUnit
             // 
             this.pbPriceUnit.BackColor = System.Drawing.Color.White;
+            this.pbPriceUnit.Image = global::PoeAcolyte.Resources.CurrencyImages.AncientOrb;
             this.pbPriceUnit.Location = new System.Drawing.Point(0, 0);
             this.pbPriceUnit.Name = "pbPriceUnit";
             this.pbPriceUnit.Size = new System.Drawing.Size(32, 32);
+            this.pbPriceUnit.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbPriceUnit.TabIndex = 0;
             this.pbPriceUnit.TabStop = false;
             // 
@@ -74,7 +76,7 @@ namespace PoeAcolyte.UI
             this.lblInfo.Font = new System.Drawing.Font("Calibri", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
             this.lblInfo.Location = new System.Drawing.Point(38, 0);
             this.lblInfo.Name = "lblInfo";
-            this.lblInfo.Size = new System.Drawing.Size(152, 51);
+            this.lblInfo.Size = new System.Drawing.Size(152, 68);
             this.lblInfo.TabIndex = 2;
             this.lblInfo.Text = "999";
             this.lblInfo.Click += new System.EventHandler(this.lblInfo_Click);
@@ -142,7 +144,7 @@ namespace PoeAcolyte.UI
             this.Controls.Add(this.lblPriceAmount);
             this.Controls.Add(this.pbPriceUnit);
             this.Name = "PoeTradeControl";
-            this.Size = new System.Drawing.Size(193, 56);
+            this.Size = new System.Drawing.Size(193, 68);
             ((System.ComponentModel.ISupportInitialize) (this.pbPriceUnit)).EndInit();
             this.contextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);

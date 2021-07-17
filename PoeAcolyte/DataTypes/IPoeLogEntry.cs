@@ -146,5 +146,6 @@ namespace PoeAcolyte.DataTypes
         /// What type of log entry it is
         /// </summary>
         public PoeLogEntryTypeEnum PoeLogEntryType { get; set; }
+        
     }
 }
