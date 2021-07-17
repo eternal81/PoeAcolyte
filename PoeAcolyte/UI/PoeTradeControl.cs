@@ -10,7 +10,7 @@ using PoeAcolyte.Service;
 
 namespace PoeAcolyte.UI
 {
-    public partial class PoeTradeControl : UserControl, IPoeTradeControl
+    public partial class PoeTradeControl : UserControl, IPoeTradeControl, IPoeTradeActions
     {
         public IPoeTradeControl.TradeStatus ActiveTradeStatus { get; set; }
         public bool IsBusy { get; set; } = true;
@@ -21,19 +21,23 @@ namespace PoeAcolyte.UI
 
         public IEnumerable<string> Players => _LogEntries.Select(o => o.Player).Distinct();
 
+        private TradeContextMenu _tradeContextMenu;
+
         //protected CellHighlight _cell;
         protected PoeSettings Settings = PoeSettings.Load();
 
         private PoeTradeControl()
         {
             InitializeComponent();
-            HandleContextMenu();
+            //HandleContextMenu();
         }
 
         public PoeTradeControl(PoeLogEntry entry, IPoeCommands commands) : this()
         {
             Commands = commands;
-            AddPlayer(entry);
+            _tradeContextMenu = new TradeContextMenu(this);
+            lblInfo.ContextMenuStrip = _tradeContextMenu.ContextMenuStrip;
+            AddLogEntry(entry);
             UpdateActiveTrade(entry);
         }
 
@@ -42,115 +46,86 @@ namespace PoeAcolyte.UI
             //ShowCellHighlight?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Designer does not play friendly with simple bubble up invocations 
-        /// </summary>
-        private void HandleContextMenu()
+        public Action Invite => () =>
         {
-            inviteMenuItem.Click += (_, _) => { SetTradeStatus(IPoeTradeControl.TradeStatus.Invited); };
-            closeMenuItem.Click += (_, _) => { Dispose(); };
-            declineMenuItem.Click += (_, _) => { SetTradeStatus(IPoeTradeControl.TradeStatus.Declined); };
-            tradeMenuItem.Click += (_, _) => { SetTradeStatus(IPoeTradeControl.TradeStatus.Traded); };
-            tyglMenuItem.Click += (_, _) => { SetTradeStatus(IPoeTradeControl.TradeStatus.ThanksGoodbye); };
-            whoIsMenuItem.Click += (_, _) =>
+            if (ActiveTradeStatus == IPoeTradeControl.TradeStatus.AskedToWait)
             {
-                Commands.SendPoeCommand(IPoeCommands.CommandType.WhoIs, ActiveLogEntry.Player);
-            };
-            waitMenuItem.Click += (_, _) => { SetTradeStatus(IPoeTradeControl.TradeStatus.AskedToWait); };
-        }
-
-        private void SetTradeStatus(IPoeTradeControl.TradeStatus newStatus)
-        {
-            switch (newStatus)
-            {
-                case IPoeTradeControl.TradeStatus.None:
-                    pbPriceUnit.BackColor = Color.White;
-                    UpdateActiveTrade();
-                    break;
-                case IPoeTradeControl.TradeStatus.AskedToWait:
-                    Commands.SendPoeWhisper(ActiveLogEntry.Player,
-                        "Busy atm, I will invite as soon as I am back in hideout");
-                    ActiveTradeStatus = IPoeTradeControl.TradeStatus.AskedToWait;
-                    pbPriceUnit.BackColor = Color.Yellow;
-                    waitMenuItem.Text = "♦" + whoIsMenuItem.Text;
-                    break;
-                case IPoeTradeControl.TradeStatus.Invited:
-                    if (ActiveTradeStatus == IPoeTradeControl.TradeStatus.AskedToWait)
-                    {
-                        // TODO format correct response messages
-                        Commands.SendPoeWhisper(ActiveLogEntry.Player, "Okay ready");
-                    }
-
-                    Commands.SendPoeCommand(IPoeCommands.CommandType.Invite, ActiveLogEntry.Player);
-                    pbPriceUnit.BackColor = Color.Green;
-                    inviteMenuItem.Text = "♦" + inviteMenuItem.Text;
-                    ActiveTradeStatus = IPoeTradeControl.TradeStatus.Invited;
-                    break;
-                case IPoeTradeControl.TradeStatus.Traded:
-                    Commands.SendPoeCommand(IPoeCommands.CommandType.Trade, ActiveLogEntry.Player);
-                    ActiveTradeStatus = IPoeTradeControl.TradeStatus.Traded;
-                    tradeMenuItem.Text = "♦" + tradeMenuItem.Text;
-                    pbPriceUnit.BackColor = Color.Blue;
-                    break;
-                case IPoeTradeControl.TradeStatus.Declined:
-                    Commands.SendPoeWhisper(ActiveLogEntry.Player, "No Thanks");
-                    RemoveTrade(ActiveLogEntry);
-                    break;
-                case IPoeTradeControl.TradeStatus.ThanksGoodbye:
-                    Commands.SendPoeWhisper(ActiveLogEntry.Player, "Thank you and GL");
-                    RemoveTrade(ActiveLogEntry);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
+                Commands.SendPoeWhisper(ActiveLogEntry.Player, "Okay ready");
             }
 
-            ActiveTradeStatus = newStatus;
-        }
+            Commands.SendPoeCommand(IPoeCommands.CommandType.Invite, ActiveLogEntry.Player);
+            pbPriceUnit.BackColor = Color.Green;
 
-        public void RemoveTrade(PoeLogEntry entry)
+            ActiveTradeStatus = IPoeTradeControl.TradeStatus.Invited;
+        };
+
+        public Action<string> Reset => (string playerName) =>
+        {
+            if (playerName is null) Program.Log.Information("Tried to reset action without player name");
+            pbPriceUnit.BackColor = Color.White;
+
+            var entry = _LogEntries.Find(logEntry => logEntry.Player == playerName);
+            if (entry is not null) UpdateActiveTrade(entry);
+            _tradeContextMenu.Refresh();
+        };
+
+        public Action AskToWait => () =>
+        {
+            Commands.SendPoeWhisper(ActiveLogEntry.Player,
+                "Busy atm, I will invite as soon as I am back in hideout");
+            ActiveTradeStatus = IPoeTradeControl.TradeStatus.AskedToWait;
+            pbPriceUnit.BackColor = Color.Yellow;
+        };
+
+        public Action Trade => () =>
+        {
+            Commands.SendPoeCommand(IPoeCommands.CommandType.Trade, ActiveLogEntry.Player);
+            ActiveTradeStatus = IPoeTradeControl.TradeStatus.Traded;
+            pbPriceUnit.BackColor = Color.Blue;
+        };
+
+        public Action Decline => () =>
+        {
+            Commands.SendPoeWhisper(ActiveLogEntry.Player, "No Thanks");
+            RemoveTrade(ActiveLogEntry);
+        };
+
+        public Action ThanksGoodbye => () =>
+        {
+            Commands.SendPoeWhisper(ActiveLogEntry.Player, "Thank you and GL");
+            RemoveTrade(ActiveLogEntry);
+        };
+
+        public Action WhoIs =>
+            () => { Commands.SendPoeCommand(IPoeCommands.CommandType.WhoIs, ActiveLogEntry.Player); };
+
+        public Action Close => Dispose;
+            
+
+        public void RemoveTrade(PoeLogEntry entry, bool bRemoveAll = false)
         {
             _LogEntries.Remove(entry);
-            if (_LogEntries.Any())
+            if (_LogEntries.Any() && !bRemoveAll)
             {
-                UpdateActiveTrade(_LogEntries[0]);
+                Reset(_LogEntries[0].Player);
             }
             else
             {
                 Dispose();
             }
-
-            SetTradeStatus(IPoeTradeControl.TradeStatus.None);
         }
 
-        public void AddWhisper(PoeLogEntry entry)
+        public void AddLogEntry(PoeLogEntry entry)
         {
-            var toolStripItems = playersMenuItem.DropDownItems.Find(entry.Player, false);
-            if (toolStripItems.Any())
+            if (entry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.Whisper)
             {
-                //var newitem = ((ToolStripMenuItem) toolStripItems[0]);
-                ((ToolStripMenuItem) toolStripItems[0]).DropDownItems.Add(entry.Other);
+                _tradeContextMenu.addWhisper(entry);
             }
-        }
-
-        public void AddPlayer(PoeLogEntry entry)
-        {
-            ToolStripMenuItem item = new ToolStripMenuItem(entry.Player) {Name = entry.Player};
-            playersMenuItem.DropDownItems.Add(item);
-
-            // Change active trade to whoever is clicked on
-            item.Click += (_, _) =>
+            else
             {
-                SetTradeStatus(IPoeTradeControl.TradeStatus.None);
-                UpdateActiveTrade(entry);
-            };
-
-            // something at end of trade request (alternative offer)
-            if (entry.Other.Length > 0)
-            {
-                item.DropDownItems.Add(entry.Other);
+                _tradeContextMenu.AddPlayer(entry);
+                _LogEntries.Add(entry);
             }
-
-            _LogEntries.Add(entry);
         }
 
         private void UpdateActiveTrade()
@@ -158,15 +133,10 @@ namespace PoeAcolyte.UI
             // TODO setup default league and compare to incoming trade request
             lblInfo.Text = ActiveLogEntry.ToString();
             pbPriceUnit.Image = Converter.FromPriceString(ActiveLogEntry.PriceUnits);
-            lblPriceAmount.Text = ActiveLogEntry.PriceAmount > 0? ActiveLogEntry.PriceAmount.ToString(): "???";
+            lblPriceAmount.Text = ActiveLogEntry.PriceAmount > 0 ? ActiveLogEntry.PriceAmount.ToString() : "???";
             toolTips.SetToolTip(lblInfo, ActiveLogEntry.Raw);
             
-            // reset menu
-            playersMenuItem.Text = "Player (reset)";
-            waitMenuItem.Text = "Wait";
-            inviteMenuItem.Text = "Invite";
-            tradeMenuItem.Text = "Trade";
-            lblInfo.ContextMenuStrip = contextMenuStrip;
+            //_tradeContextMenu.Refresh();
         }
 
         public void UpdateActiveTrade(PoeLogEntry entry)
@@ -180,13 +150,13 @@ namespace PoeAcolyte.UI
             switch (ActiveTradeStatus)
             {
                 case IPoeTradeControl.TradeStatus.None:
-                    if (IsBusy) SetTradeStatus(IPoeTradeControl.TradeStatus.AskedToWait);
+                    if (IsBusy) AskToWait();
                     break;
                 case IPoeTradeControl.TradeStatus.AskedToWait:
-                    if (!IsBusy) SetTradeStatus(IPoeTradeControl.TradeStatus.Invited);
+                    if (!IsBusy) Invite();
                     break;
                 case IPoeTradeControl.TradeStatus.Invited:
-                    SetTradeStatus(IPoeTradeControl.TradeStatus.Traded);
+                    Trade();
                     break;
                 // ///////////////
                 // Need a better way of determining if trade accepted is for this one

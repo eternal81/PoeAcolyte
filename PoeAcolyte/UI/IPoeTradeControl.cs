@@ -13,14 +13,12 @@ namespace PoeAcolyte.UI
             None,
             AskedToWait,
             Invited,
-            Traded,
-            ThanksGoodbye,
-            Declined
+            Traded
         }
         public bool IsBusy { get; set; }
         public TradeStatus ActiveTradeStatus { get; set; }
-        public void AddWhisper(PoeLogEntry entry);
-        public void AddPlayer(PoeLogEntry entry);
+        public void AddLogEntry(PoeLogEntry entry);
+
         public void UpdateActiveTrade(PoeLogEntry entry);
         /// <summary>
         /// Needed for updating control collections it is added to / removed from

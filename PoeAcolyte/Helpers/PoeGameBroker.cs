@@ -100,7 +100,8 @@ namespace PoeAcolyte.Helpers
             if (!e.LogEntry.Incoming) return;
             foreach (var broker in TradeControls.Where(broker => broker.Players.Contains(e.LogEntry.Player)))
             {
-                broker.AddWhisper(e.LogEntry);
+                //broker.AddWhisper(e.LogEntry);
+                broker.AddLogEntry(e.LogEntry);
             }
         }
 
@@ -147,7 +148,8 @@ namespace PoeAcolyte.Helpers
             // Duplicate trade (possible extra message at end or other players)
             foreach (var broker in duplicates)
             {
-                broker.AddPlayer(e);
+                //broker.AddPlayer(e);
+                broker.AddLogEntry(e);
                 bFound = true;
             }
 
