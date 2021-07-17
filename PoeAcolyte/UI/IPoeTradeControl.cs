@@ -19,7 +19,7 @@ namespace PoeAcolyte.UI
         public TradeStatus ActiveTradeStatus { get; set; }
         public void AddLogEntry(PoeLogEntry entry);
 
-        public void UpdateActiveTrade(PoeLogEntry entry);
+        //public void UpdateActiveTrade(PoeLogEntry entry);
         /// <summary>
         /// Needed for updating control collections it is added to / removed from
         /// </summary>

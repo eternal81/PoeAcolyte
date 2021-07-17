@@ -144,7 +144,7 @@ namespace PoeAcolyte.UI
             this.Controls.Add(this.lblPriceAmount);
             this.Controls.Add(this.pbPriceUnit);
             this.Name = "PoeTradeControl";
-            this.Size = new System.Drawing.Size(193, 68);
+            this.Size = new System.Drawing.Size(193, 80);
             ((System.ComponentModel.ISupportInitialize) (this.pbPriceUnit)).EndInit();
             this.contextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
