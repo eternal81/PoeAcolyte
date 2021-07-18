@@ -39,6 +39,7 @@ namespace PoeAcolyte.UI
             this.lblInfo = new System.Windows.Forms.Label();
             this.pbTradeDirection = new System.Windows.Forms.PictureBox();
             this.toolTips = new System.Windows.Forms.ToolTip(this.components);
+            this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             ((System.ComponentModel.ISupportInitialize) (this.pbPriceUnit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize) (this.pbBuyUnit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize) (this.pbTradeDirection)).BeginInit();
@@ -49,6 +50,7 @@ namespace PoeAcolyte.UI
             this.pbPriceUnit.Location = new System.Drawing.Point(3, 3);
             this.pbPriceUnit.Name = "pbPriceUnit";
             this.pbPriceUnit.Size = new System.Drawing.Size(32, 32);
+            this.pbPriceUnit.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbPriceUnit.TabIndex = 0;
             this.pbPriceUnit.TabStop = false;
             // 
@@ -57,6 +59,7 @@ namespace PoeAcolyte.UI
             this.pbBuyUnit.Location = new System.Drawing.Point(3, 45);
             this.pbBuyUnit.Name = "pbBuyUnit";
             this.pbBuyUnit.Size = new System.Drawing.Size(32, 32);
+            this.pbBuyUnit.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbBuyUnit.TabIndex = 1;
             this.pbBuyUnit.TabStop = false;
             // 
@@ -80,21 +83,26 @@ namespace PoeAcolyte.UI
             // 
             // lblInfo
             // 
-            this.lblInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
+            this.lblInfo.Font = new System.Drawing.Font("Calibri", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
             this.lblInfo.Location = new System.Drawing.Point(79, 3);
             this.lblInfo.Name = "lblInfo";
             this.lblInfo.Size = new System.Drawing.Size(108, 77);
             this.lblInfo.TabIndex = 4;
             this.lblInfo.Text = "label3";
-            this.lblInfo.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // pbTradeDirection
             // 
             this.pbTradeDirection.Location = new System.Drawing.Point(41, 24);
             this.pbTradeDirection.Name = "pbTradeDirection";
             this.pbTradeDirection.Size = new System.Drawing.Size(32, 32);
+            this.pbTradeDirection.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbTradeDirection.TabIndex = 5;
             this.pbTradeDirection.TabStop = false;
+            // 
+            // contextMenu
+            // 
+            this.contextMenu.Name = "contextMenu";
+            this.contextMenu.Size = new System.Drawing.Size(153, 26);
             // 
             // BulkTradeControl
             // 
@@ -114,6 +122,8 @@ namespace PoeAcolyte.UI
             ((System.ComponentModel.ISupportInitialize) (this.pbTradeDirection)).EndInit();
             this.ResumeLayout(false);
         }
+
+        private System.Windows.Forms.ContextMenuStrip contextMenu;
 
         private System.Windows.Forms.ToolTip toolTips;
 

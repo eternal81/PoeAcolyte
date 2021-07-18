@@ -66,10 +66,15 @@ namespace PoeAcolyte.Helpers
         private void LogReaderOnWhisper(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
             // Only handle incoming whispers
-            if (!e.LogEntry.Incoming) return;
+            //if (!e.LogEntry.Incoming) return;
+            
             foreach (var broker in TradeControls.Where(broker => broker.Players.Contains(e.LogEntry.Player)))
             {
-                broker.AddLogEntry(e.LogEntry);
+                if (broker.GetType() == typeof(BulkTrade))
+                {
+                    ((BulkTrade) broker).TakeLogEntry(e.LogEntry);
+                }
+                else{broker.AddLogEntry(e.LogEntry);}
             }
         }
 
@@ -126,6 +131,17 @@ namespace PoeAcolyte.Helpers
         /// <returns>true if <see cref="TradeControls"/> contains the entry, false if not</returns>
         private bool DuplicateItem(PoeLogEntry e)
         {
+            if (e.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade)
+            {
+                var bTaken = false;
+                foreach (var bulktrades in TradeControls.Where(trade => trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade))
+                {
+                    var t =(BulkTrade) bulktrades;
+                    if (t.TakeLogEntry(e)) bTaken = true;
+                }
+                return bTaken;
+            }
+            // code to replace
             var bFound = false;
 
             var duplicates = TradeControls.Where(incoming =>
@@ -177,17 +193,17 @@ namespace PoeAcolyte.Helpers
         /// <summary>
         /// Broker to handle interaction with the POE client
         /// </summary>
-        private PoeGameService Service { get; }
+        public PoeGameService Service { get; }
 
         /// <summary>
         /// Broker to handle interaction with the POE logs
         /// </summary>
-        private PoeLogReader LogReader { get; }
+        public PoeLogReader LogReader { get; }
 
         /// <summary>
         /// List of active trades (used for routing log entries)
         /// </summary>
-        private List<IPoeTradeControl> TradeControls { get; } = new();
+        public List<IPoeTradeControl> TradeControls { get; } = new();
 
         #endregion
     }

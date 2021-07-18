@@ -2,14 +2,15 @@
 using System.Linq;
 using System.Windows.Forms;
 using PoeAcolyte.DataTypes;
+using PoeAcolyte.Service;
 
 namespace PoeAcolyte.UI
 {
     public class BulkTrade : Trade, IPoeTradeControl
     {
         private readonly BulkTradeControl _bulkTradeControl;
-        public UserControl GetUserControl => _bulkTradeControl;
-        public override PoeLogEntry ActiveLogEntry
+        public override UserControl GetUserControl => _bulkTradeControl;
+        public sealed override PoeLogEntry ActiveLogEntry
         {
             get => ActiveEntry;
             set
@@ -18,13 +19,24 @@ namespace PoeAcolyte.UI
                 _bulkTradeControl.UpdateControls(ActiveEntry);
             }
         }
-        
+
         public BulkTrade(PoeLogEntry entry) : base(entry)
         {
             _bulkTradeControl = new BulkTradeControl();
-            _bulkTradeControl.UpdateControls(entry);
+            ActiveLogEntry = entry;
+            SetContext();
         }
 
+        private void SetContext()
+        {
+            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("No Thanks", Decline));
+            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Invite", Invite, true));
+            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Trade", DoTrade, true));
+            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Out of stock", NoStock));
+            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Close", Close));
+            _bulkTradeControl.Contextmenu.Items.Add(PlayersMenu);
+        }
+        
         public void AddLogEntry(PoeLogEntry entry)
         {
             throw new NotImplementedException();
@@ -32,20 +44,22 @@ namespace PoeAcolyte.UI
 
         public override bool TakeLogEntry(PoeLogEntry entry)
         {
-            if (entry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.Whisper && Players.Contains(entry.Player))
-            {
-                LogEntries.Add(entry);
-                return true;
-            }
-
+            if (CheckWhisper(entry)) return true;
+            
             if (entry.Incoming == ActiveLogEntry.Incoming && entry.Outgoing == ActiveLogEntry.Outgoing &&
-                entry.BuyPriceUnits == ActiveLogEntry.PriceUnits)
+                entry.BuyPriceUnits == ActiveLogEntry.BuyPriceUnits && entry.PriceUnits == ActiveLogEntry.PriceUnits)
             {
                 LogEntries.Add(entry);
+                PlayersMenu.DropDownItems.Add(MakeMenuItem(entry, logEntry => { ActiveLogEntry = logEntry; }));
                 return true;
             }
 
             return false;
+        }
+
+        public override void Dispose()
+        {
+            _bulkTradeControl.Dispose();
         }
     }
 }

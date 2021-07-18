@@ -19,19 +19,19 @@ namespace PoeAcolyte.UI
             {
                 inviteMenuItem.Checked = true;
                 _actions.Invite();
-            }; 
-            waitMenuItem.Click+= (_, _) =>
+            };
+            waitMenuItem.Click += (_, _) =>
             {
                 waitMenuItem.Checked = true;
                 _actions.AskToWait();
-            }; 
-            tradeMenuItem.Click+= (_, _) =>
+            };
+            tradeMenuItem.Click += (_, _) =>
             {
                 tradeMenuItem.Checked = true;
                 _actions.Trade();
-            }; 
-            declineMenuItem.Click += (_, _) => { _actions.Decline(); }; 
-            tyglMenuItem.Click += (_, _) => { _actions.ThanksGoodbye(); }; 
+            };
+            declineMenuItem.Click += (_, _) => { _actions.Decline(); };
+            tyglMenuItem.Click += (_, _) => { _actions.ThanksGoodbye(); };
             whoIsMenuItem.Click += (_, _) => { _actions.WhoIs(); };
             closeMenuItem.Click += (_, _) => { _actions.Close(); };
         }
@@ -46,7 +46,7 @@ namespace PoeAcolyte.UI
         public void Refresh()
         {
             waitMenuItem.Checked = false;
-            inviteMenuItem.Checked=false;
+            inviteMenuItem.Checked = false;
             tradeMenuItem.Checked = false;
         }
 
@@ -71,5 +71,19 @@ namespace PoeAcolyte.UI
                 ((ToolStripMenuItem) toolStripItems[0]).DropDownItems.Add(entry.Other);
             }
         }
-    }
+
+        #region Refactoring Content
+
+        public static ToolStripMenuItem MakeItem(string text, Action action, bool checkOnClick = false)
+        {
+            var ret = new ToolStripMenuItem(text);
+            ret.Click += (sender, args) =>
+            {
+                ret.Checked = checkOnClick;
+                action();
+            };
+            return ret;
+        }
+    #endregion
+}
 }

@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Drawing;
+using System.Windows.Forms;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Helpers;
 
@@ -6,6 +7,7 @@ namespace PoeAcolyte.UI
 {
     public partial class BulkTradeControl : UserControl
     {
+        public ContextMenuStrip Contextmenu => contextMenu;
         public BulkTradeControl()
         {
             InitializeComponent();
@@ -19,7 +21,11 @@ namespace PoeAcolyte.UI
             lblBuyAmount.Text = entry.BuyPriceAmount.ToString();
             lblPriceAmount.Text = entry.PriceAmount.ToString();
             toolTips.SetToolTip(lblInfo, entry.Raw);
+            pbTradeDirection.Image = entry.Incoming ? Resources.Region.UpArrow : Resources.Region.DownArrow;
+            BackColor = entry.Incoming ? Color.Bisque : Color.LightBlue;
             
+            lblInfo.ContextMenuStrip = contextMenu;
+            this.ContextMenuStrip = contextMenu;
         }
     }
 }
