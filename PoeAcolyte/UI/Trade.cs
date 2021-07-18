@@ -8,21 +8,27 @@ namespace PoeAcolyte.UI
 {
     public class Trade
     {
-        protected readonly PoeLogEntry Entry;
+        protected PoeLogEntry ActiveEntry;
         protected readonly IPoeCommands PoeCommands;
         protected readonly List<PoeLogEntry> LogEntries = new();
 
         public bool IsBusy { get; set; }
         public IPoeTradeControl.TradeStatus ActiveTradeStatus { get; set; }
         public IEnumerable<string> Players => LogEntries.Select(o => o.Player).Distinct();
-        public PoeLogEntry ActiveLogEntry { get; set; }
+        public virtual PoeLogEntry ActiveLogEntry { get; set; }
         public IPoeCommands Commands { get; set; }
         public event EventHandler Disposed;
 
-        public Trade(PoeLogEntry entry, IPoeCommands commands)
+        public Trade(PoeLogEntry entry)
         {
-            Entry = entry;
-            PoeCommands = commands;
+            ActiveEntry = entry;
+            
+        }
+
+        public virtual bool TakeLogEntry(PoeLogEntry entry)
+        {
+            return false;
+            
         }
     }
 }

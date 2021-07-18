@@ -17,7 +17,7 @@ namespace PoeAcolyte.Helpers
         /// Default constructor. Loads in <see cref="PoeSettings"/>, <see cref="PoeGameService"/>,
         /// <see cref="PoeLogReader"/> and hooks to log events
         /// </summary>
-        private PoeGameBroker()
+        public PoeGameBroker()
         {
             Settings = PoeSettings.Load();
             Service = new PoeGameService();
@@ -76,13 +76,13 @@ namespace PoeAcolyte.Helpers
         private void LogReaderOnBulkTrade(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
             // Only handle incoming trade request
-            if (!e.LogEntry.Incoming) return;
+            //if (!e.LogEntry.Incoming) return;
 
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
             
             // Brand new request
-            IPoeTradeControl tradeControl = new PoeTradeControl(e.LogEntry, Service);
+            IPoeTradeControl tradeControl = new BulkTrade(e.LogEntry);
 
             tradeControl.Disposed += (_, _) =>
             {
@@ -172,7 +172,7 @@ namespace PoeAcolyte.Helpers
         /// <summary>
         /// Control container (FlowLayoutPanel) to populate with trade requests
         /// </summary>
-        private Control TradePanel { get; set; }
+        public Control TradePanel { get; set; }
 
         /// <summary>
         /// Broker to handle interaction with the POE client

@@ -136,7 +136,7 @@ namespace PoeAcolyte.Service
             }
         }
 
-        private bool SendCommandToClient(string command, int waitTime = 50)
+        public bool SendCommandToClient(string command, int waitTime = 50)
         {
             if (!FocusPoe()) return false;
             WindowsInput.Simulate.Events()

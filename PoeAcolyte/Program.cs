@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using PoeAcolyte.Helpers;
 using PoeAcolyte.UI;
 using Serilog;
 using Serilog.Core;
@@ -31,12 +32,14 @@ namespace PoeAcolyte
             }
         }
 
+        public static PoeGameBroker GameBroker { get; set; }
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
+            GameBroker = new PoeGameBroker();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Overlay());
