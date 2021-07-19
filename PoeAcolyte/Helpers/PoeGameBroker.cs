@@ -22,11 +22,11 @@ namespace PoeAcolyte.Helpers
             Settings = PoeSettings.Load();
             Service = new PoeGameService();
             LogReader = new PoeLogReader();
-            LogReader.PricedTrade += LogReaderOnTrade;
+            LogReader.PricedTrade += LogReaderOnSingleTrade;
             LogReader.BulkTrade += LogReaderOnBulkTrade;
             LogReader.Whisper += LogReaderOnWhisper;
             LogReader.YouJoin += LogReaderOnYouJoin;
-            LogReader.UnpricedTrade += LogReaderOnTrade;
+            LogReader.UnpricedTrade += LogReaderOnSingleTrade;
             
             // Automatically search client log if POE is open
             Service.PoeConnected += (_, args) =>
@@ -104,16 +104,16 @@ namespace PoeAcolyte.Helpers
         /// </summary>
         /// <param name="sender">not useful / null</param>
         /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
-        private void LogReaderOnTrade(object sender, IPoeLogReader.PoeLogEventArgs e)
+        private void LogReaderOnSingleTrade(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
             // Only handle incoming trade request
-            if (!e.LogEntry.Incoming) return;
+            //if (!e.LogEntry.Incoming) return;
 
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
 
             // Brand new request
-            IPoeTradeControl tradeControl = new PoeTradeControl(e.LogEntry, Service);
+            IPoeTradeControl tradeControl = new SingleTrade(e.LogEntry);
 
             tradeControl.Disposed += (_, _) =>
             {
@@ -137,6 +137,18 @@ namespace PoeAcolyte.Helpers
                 foreach (var bulktrades in TradeControls.Where(trade => trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade))
                 {
                     var t =(BulkTrade) bulktrades;
+                    if (t.TakeLogEntry(e)) bTaken = true;
+                }
+                return bTaken;
+            }
+            else if (e.PoeLogEntryType is IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade or IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade)
+            {
+                var bTaken = false;
+                foreach (var singletrades in TradeControls.Where(trade => 
+                    trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade || 
+                    trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade))
+                {
+                    var t =(SingleTrade) singletrades;
                     if (t.TakeLogEntry(e)) bTaken = true;
                 }
                 return bTaken;

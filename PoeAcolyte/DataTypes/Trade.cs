@@ -2,40 +2,46 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using PoeAcolyte.DataTypes;
 using PoeAcolyte.Service;
+using PoeAcolyte.UI;
 
-namespace PoeAcolyte.UI
+namespace PoeAcolyte.DataTypes
 {
-    public class Trade : IDisposable
-    {        
+    public class Trade : IDisposable, ITrade
+    {
         /// <summary>
         /// /////////////////////////////////// get rid of
         /// </summary>
         public IPoeCommands Commands { get; set; }
-        
+
         protected ToolStripMenuItem PlayersMenu = new("Players");
         protected PoeLogEntry ActiveEntry;
         protected readonly List<PoeLogEntry> LogEntries = new();
         public bool IsBusy { get; set; }
         public IPoeTradeControl.TradeStatus ActiveTradeStatus { get; set; }
         public IEnumerable<string> Players => LogEntries.Select(o => o.Player).Distinct();
-        public virtual PoeLogEntry ActiveLogEntry { get=>ActiveEntry; set=>ActiveEntry=value; }
+
+        public virtual PoeLogEntry ActiveLogEntry
+        {
+            get => ActiveEntry;
+            set => ActiveEntry = value;
+        }
+
         public event EventHandler Disposed;
         public virtual UserControl GetUserControl { get; set; }
-        
+
         public Trade(PoeLogEntry entry)
         {
             LogEntries.Add(entry);
 
-            PlayersMenu.DropDownItems.Add(MakeMenuItem(entry, logEntry => { ActiveEntry = logEntry;}));
+            
         }
 
         public virtual bool TakeLogEntry(PoeLogEntry entry)
         {
             return false;
         }
-        
+
         public void RemoveTrade(PoeLogEntry entry, bool bRemoveAll = false)
         {
             LogEntries.Remove(entry);
@@ -49,16 +55,16 @@ namespace PoeAcolyte.UI
         {
             if (entry.PoeLogEntryType != IPoeLogEntry.PoeLogEntryTypeEnum.Whisper ||
                 !Players.Contains(entry.Player)) return false;
-            
-            var match =  PlayersMenu.DropDownItems.Find(entry.Player, false);
+
+            var match = PlayersMenu.DropDownItems.Find(entry.Player, false);
             if (!match.Any()) return false;
-            
-            var menuItem = (ToolStripMenuItem)match.First();
+
+            var menuItem = (ToolStripMenuItem) match.First();
             menuItem.DropDownItems.Add(entry.Other);
             LogEntries.Add(entry);
             return true;
         }
-
+        
         public Action Invite => () =>
         {
             Program.GameBroker.Service.SendCommandToClient($"/invite {ActiveLogEntry.Player}");
@@ -66,6 +72,11 @@ namespace PoeAcolyte.UI
             ActiveTradeStatus = IPoeTradeControl.TradeStatus.Invited;
         };
 
+        public Action DoTrade => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient($"/tradewith {ActiveLogEntry.Player}");
+        };
+        
         public Action NoStock => () =>
         {
             Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Sold out");
@@ -78,18 +89,21 @@ namespace PoeAcolyte.UI
             Program.GameBroker.Service.SendCommandToClient($"/kick {ActiveLogEntry.Player}");
             RemoveTrade(ActiveEntry);
         };
-        public Action DoTrade => () =>
+
+        public Action WhoIs => () =>
         {
-            Program.GameBroker.Service.SendCommandToClient($"/tradewith {ActiveLogEntry.Player}");
-            RemoveTrade(ActiveEntry);
+            Program.GameBroker.Service.SendCommandToClient($"@/whois {ActiveLogEntry.Player}");
         };
+        
         public Action Close => Dispose;
 
+        public Action<PoeLogEntry> SetActiveEntry => delegate(PoeLogEntry entry) { ActiveLogEntry = entry;};
 
         public virtual void Dispose()
         {
-            
+
         }
+
         /// <summary>
         /// Generic context menu add
         /// </summary>
@@ -99,7 +113,7 @@ namespace PoeAcolyte.UI
         /// <returns></returns>
         public static ToolStripMenuItem MakeMenuItem(string text, Action action, bool checkOnClick = false)
         {
-            var ret = new ToolStripMenuItem(text){Name = text};
+            var ret = new ToolStripMenuItem(text) {Name = text};
             ret.Click += (sender, args) =>
             {
                 ret.Checked = checkOnClick;
@@ -112,18 +126,18 @@ namespace PoeAcolyte.UI
         /// </summary>
         /// <param name="entry"></param>
         /// <param name="action"></param>
-        /// <param name="checkOnClick"></param>
+        /// <param name="suffix"></param>
         /// <returns></returns>
-        public static ToolStripMenuItem MakeMenuItem(PoeLogEntry entry, Action<PoeLogEntry> action, bool checkOnClick = false)
+        public static ToolStripMenuItem AddPlayerToMenu(PoeLogEntry entry, Action<PoeLogEntry> action,
+            string suffix = "")
         {
-            var text = $"{entry.Player}  {entry.PriceAmount} {entry.PriceUnits} ► {entry.BuyPriceAmount} {entry.BuyPriceUnits}";
-            var ret = new ToolStripMenuItem(text){Name = entry.Player};
+            var ret = new ToolStripMenuItem(entry.Player + suffix) {Name = entry.Player};
             ret.Click += (sender, args) =>
             {
-                ret.Checked = checkOnClick;
                 action(entry);
             };
             return ret;
         }
+        
     }
 }

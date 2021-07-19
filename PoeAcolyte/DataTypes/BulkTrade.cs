@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Windows.Forms;
-using PoeAcolyte.DataTypes;
-using PoeAcolyte.Service;
+using PoeAcolyte.UI;
 
-namespace PoeAcolyte.UI
+namespace PoeAcolyte.DataTypes
 {
     public class BulkTrade : Trade, IPoeTradeControl
     {
@@ -29,12 +27,14 @@ namespace PoeAcolyte.UI
 
         private void SetContext()
         {
-            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("No Thanks", Decline));
-            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Invite", Invite, true));
-            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Trade", DoTrade, true));
-            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Out of stock", NoStock));
-            _bulkTradeControl.Contextmenu.Items.Add(MakeMenuItem("Close", Close));
-            _bulkTradeControl.Contextmenu.Items.Add(PlayersMenu);
+            _bulkTradeControl.ContextMenuStrip.Items.Clear();
+            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("No Thanks", Decline));
+            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Invite", Invite, true));
+            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Trade", DoTrade, true));
+            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Out of stock", NoStock));
+            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Close", Close));
+            _bulkTradeControl.ContextMenuStrip.Items.Add(PlayersMenu);
+            PlayersMenu.DropDownItems.Add(AddPlayerToMenu(ActiveEntry, SetActiveEntry));
         }
         
         public void AddLogEntry(PoeLogEntry entry)
@@ -50,7 +50,8 @@ namespace PoeAcolyte.UI
                 entry.BuyPriceUnits == ActiveLogEntry.BuyPriceUnits && entry.PriceUnits == ActiveLogEntry.PriceUnits)
             {
                 LogEntries.Add(entry);
-                PlayersMenu.DropDownItems.Add(MakeMenuItem(entry, logEntry => { ActiveLogEntry = logEntry; }));
+                var suffix = $"{entry.Player}  {entry.PriceAmount} {entry.PriceUnits} ► {entry.BuyPriceAmount} {entry.BuyPriceUnits}";
+                PlayersMenu.DropDownItems.Add(AddPlayerToMenu(entry, SetActiveEntry, suffix));
                 return true;
             }
 
@@ -61,5 +62,6 @@ namespace PoeAcolyte.UI
         {
             _bulkTradeControl.Dispose();
         }
+        
     }
 }

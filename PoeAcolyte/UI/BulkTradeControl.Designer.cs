@@ -40,6 +40,7 @@ namespace PoeAcolyte.UI
             this.pbTradeDirection = new System.Windows.Forms.PictureBox();
             this.toolTips = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.lblStatus = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize) (this.pbPriceUnit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize) (this.pbBuyUnit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize) (this.pbTradeDirection)).BeginInit();
@@ -86,7 +87,7 @@ namespace PoeAcolyte.UI
             this.lblInfo.Font = new System.Drawing.Font("Calibri", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
             this.lblInfo.Location = new System.Drawing.Point(79, 3);
             this.lblInfo.Name = "lblInfo";
-            this.lblInfo.Size = new System.Drawing.Size(108, 77);
+            this.lblInfo.Size = new System.Drawing.Size(108, 53);
             this.lblInfo.TabIndex = 4;
             this.lblInfo.Text = "label3";
             // 
@@ -102,13 +103,22 @@ namespace PoeAcolyte.UI
             // contextMenu
             // 
             this.contextMenu.Name = "contextMenu";
-            this.contextMenu.Size = new System.Drawing.Size(153, 26);
+            this.contextMenu.Size = new System.Drawing.Size(61, 4);
+            // 
+            // lblStatus
+            // 
+            this.lblStatus.Location = new System.Drawing.Point(79, 60);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(108, 17);
+            this.lblStatus.TabIndex = 6;
+            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // BulkTradeControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int) (((byte) (255)))), ((int) (((byte) (255)))), ((int) (((byte) (192)))));
+            this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.pbTradeDirection);
             this.Controls.Add(this.lblInfo);
             this.Controls.Add(this.lblBuyAmount);
@@ -122,6 +132,8 @@ namespace PoeAcolyte.UI
             ((System.ComponentModel.ISupportInitialize) (this.pbTradeDirection)).EndInit();
             this.ResumeLayout(false);
         }
+
+        public System.Windows.Forms.Label lblStatus;
 
         private System.Windows.Forms.ContextMenuStrip contextMenu;
 

@@ -263,15 +263,11 @@ namespace PoeAcolyte.DataTypes
             return PoeLogEntryType switch
             {
                 IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade =>
-                    $"{BuyPriceAmount} {BuyPriceUnits}\r\n" +
-                    $"{Player} ({PoeLogEntryType})\r\n" + $"{League}",
+                    $"{BuyPriceAmount} {BuyPriceUnits}\r\n {Player}\r\n({League}) {PoeLogEntryType}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade =>
-                    $"{Item}\r\n" + $"({StashTab})\r\n" +
-                    $"Top: {Top}, Left: {Left}\r\n" +
-                    $"{Player} ({PoeLogEntryType})" + $"{League}",
+                    $"{Item}\r\n ({StashTab}) TL: {Top}, {Left}\r\n{Player} \r\n({League}) {PoeLogEntryType}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade =>
-                    $"{Item}\r\n" + $"{Player} ({PoeLogEntryType} )\r\n" +
-                    $"{League}",
+                    $"{Item}\r\n" + $"{Player} \r\n ({League}) {PoeLogEntryType}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.Whisper => $"({Player} - {Other}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.AreaJoined => $"{Player} joined",
                 IPoeLogEntry.PoeLogEntryTypeEnum.AreaLeft => $"{Player} left",
