@@ -9,7 +9,7 @@ namespace PoeAcolyte.Service
     /// <summary>
     /// POE game monitoring service. Detects when client is opened and handles sending input to client
     /// </summary>
-    public class PoeGameService : IPoeCommands
+    public class PoeGameService 
     {
         /// <summary>
         /// EventArgs used for poe client being open or closed
@@ -86,56 +86,12 @@ namespace PoeAcolyte.Service
             return true;
         }
 
-        public void SendPoeWhisper(string player, string message)
-        {
-            SendCommandToClient("@" + player + " " + message);
-        }
-
-        public void SendPoeCommand(IPoeCommands.CommandType type, string player)
-        {
-            switch (type)
-            {
-                case IPoeCommands.CommandType.Invite:
-                    SendCommandToClient("/invite " + player);
-                    break;
-                case IPoeCommands.CommandType.Trade:
-                    SendCommandToClient("/tradewith " + player);
-                    break;
-                case IPoeCommands.CommandType.Kick:
-                    SendCommandToClient("/kick " + player);
-                    break;
-                case IPoeCommands.CommandType.Hideout:
-                    SendCommandToClient("/hideout " + player);
-                    break;
-                case IPoeCommands.CommandType.WhoIs:
-                    SendCommandToClient("/whois " + player);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
-            }
-        }
-
-        public void SendPoeCommand(IPoeCommands.CommandType type)
-        {
-            switch (type)
-            {
-                case IPoeCommands.CommandType.Hideout:
-                    SendCommandToClient("/hideout");
-                    break;
-                case IPoeCommands.CommandType.Delve:
-                    SendCommandToClient("/delve");
-                    break;
-                case IPoeCommands.CommandType.Menagerie:
-                    SendCommandToClient("/menagerie");
-                    break;
-                case IPoeCommands.CommandType.Metamorph:
-                    SendCommandToClient("/metamorph");
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
-            }
-        }
-
+        /// <summary>
+        /// Send string of text to chat console in POE
+        /// </summary>
+        /// <param name="command">Text to send to POE (single line only)</param>
+        /// <param name="waitTime">Time in milliseconds between action commands</param>
+        /// <returns>true if executed to end, false otherwise</returns>
         public bool SendCommandToClient(string command, int waitTime = 50)
         {
             if (!FocusPoe()) return false;

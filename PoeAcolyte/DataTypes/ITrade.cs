@@ -8,22 +8,20 @@ namespace PoeAcolyte.DataTypes
 {
     public interface ITrade
     {
-        bool IsBusy { get; set; }
-        IPoeTradeControl.TradeStatus ActiveTradeStatus { get; set; }
-        IEnumerable<string> Players { get; }
-        PoeLogEntry ActiveLogEntry { get; set; }
-        UserControl GetUserControl { get; set; }
-        Action Invite { get; }
-        Action DoTrade { get; }
-        Action NoStock { get; }
-        Action Decline { get; }
-        Action WhoIs { get; }
-        Action Close { get; }
-        Action<PoeLogEntry> SetActiveEntry { get; }
+        public enum TradeStatus
+        {
+            None,
+            AskedToWait,
+            Invited,
+            Traded
+        }
+        public bool IsBusy { get; set; }
+        public IEnumerable<string> Players { get; }
+        public PoeLogEntry ActiveLogEntry { get; set; }
+        public UserControl GetUserControl { get; }
+
         event EventHandler Disposed;
         bool TakeLogEntry(PoeLogEntry entry);
-        void RemoveTrade(PoeLogEntry entry, bool bRemoveAll = false);
-        bool CheckWhisper(PoeLogEntry entry);
-        void Dispose();
+
     }
 }

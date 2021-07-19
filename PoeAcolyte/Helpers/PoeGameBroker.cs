@@ -52,49 +52,45 @@ namespace PoeAcolyte.Helpers
         /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
         private void LogReaderOnYouJoin(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
-            foreach (var tradeControl in TradeControls)
+            foreach (var tradeControl in ActiveTrades)
             {
                 tradeControl.IsBusy = !e.LogEntry.Area.Contains("Hideout");
             }
         }
 
         /// <summary>
-        /// Event handler for <see cref="IPoeLogReader.Whisper"/>
+        /// Event handler for <see cref="IPoeLogReader.Whisper"/> checks each active trade if the player that whispered
+        /// is attached to
         /// </summary>
         /// <param name="sender">not useful / null</param>
         /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
         private void LogReaderOnWhisper(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
-            // Only handle incoming whispers
-            //if (!e.LogEntry.Incoming) return;
-            
-            foreach (var broker in TradeControls.Where(broker => broker.Players.Contains(e.LogEntry.Player)))
+            foreach (var trade in ActiveTrades.Where(trades => trades.Players.Contains(e.LogEntry.Player)))
             {
-                if (broker.GetType() == typeof(BulkTrade))
-                {
-                    ((BulkTrade) broker).TakeLogEntry(e.LogEntry);
-                }
-                else{broker.AddLogEntry(e.LogEntry);}
+                trade.TakeLogEntry(e.LogEntry);
             }
         }
 
+        /// <summary>
+        /// Event handler for <see cref="IPoeLogReader.BulkTrade"/>
+        /// </summary>
+        /// <param name="sender">not useful / null</param>
+        /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
         private void LogReaderOnBulkTrade(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
-            // Only handle incoming trade request
-            //if (!e.LogEntry.Incoming) return;
-
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
             
             // Brand new request
-            IPoeTradeControl tradeControl = new BulkTrade(e.LogEntry);
+            ITrade tradeControl = new BulkTrade(e.LogEntry);
 
             tradeControl.Disposed += (_, _) =>
             {
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
-                TradeControls.Remove(tradeControl);
+                ActiveTrades.Remove(tradeControl);
             };
-            TradeControls.Add(tradeControl);
+            ActiveTrades.Add(tradeControl);
             TradePanel.Controls.Add(tradeControl.GetUserControl);
         }
 
@@ -106,21 +102,18 @@ namespace PoeAcolyte.Helpers
         /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
         private void LogReaderOnSingleTrade(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
-            // Only handle incoming trade request
-            //if (!e.LogEntry.Incoming) return;
-
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
 
             // Brand new request
-            IPoeTradeControl tradeControl = new SingleTrade(e.LogEntry);
+            ITrade tradeControl = new SingleTrade(e.LogEntry);
 
             tradeControl.Disposed += (_, _) =>
             {
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
-                TradeControls.Remove(tradeControl);
+                ActiveTrades.Remove(tradeControl);
             };
-            TradeControls.Add(tradeControl);
+            ActiveTrades.Add(tradeControl);
             TradePanel.Controls.Add(tradeControl.GetUserControl);
         }
 
@@ -128,47 +121,15 @@ namespace PoeAcolyte.Helpers
         /// See if item already has an existing trade control
         /// </summary>
         /// <param name="e"><see cref="PoeLogEntry"/> to compare against</param>
-        /// <returns>true if <see cref="TradeControls"/> contains the entry, false if not</returns>
+        /// <returns>true if <see cref="ActiveTrades"/> contains the entry, false if not</returns>
         private bool DuplicateItem(PoeLogEntry e)
         {
-            if (e.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade)
+            var bTaken = false;
+            foreach (var trade in ActiveTrades.Where(trade => trade.ActiveLogEntry.PoeLogEntryType == e.PoeLogEntryType))
             {
-                var bTaken = false;
-                foreach (var bulktrades in TradeControls.Where(trade => trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.BulkTrade))
-                {
-                    var t =(BulkTrade) bulktrades;
-                    if (t.TakeLogEntry(e)) bTaken = true;
-                }
-                return bTaken;
+                if (trade.TakeLogEntry(e)) bTaken = true;
             }
-            else if (e.PoeLogEntryType is IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade or IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade)
-            {
-                var bTaken = false;
-                foreach (var singletrades in TradeControls.Where(trade => 
-                    trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade || 
-                    trade.ActiveLogEntry.PoeLogEntryType == IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade))
-                {
-                    var t =(SingleTrade) singletrades;
-                    if (t.TakeLogEntry(e)) bTaken = true;
-                }
-                return bTaken;
-            }
-            // code to replace
-            var bFound = false;
-
-            var duplicates = TradeControls.Where(incoming =>
-                incoming.ActiveLogEntry.Item == e.Item &&
-                incoming.ActiveLogEntry.Top == e.Top &&
-                incoming.ActiveLogEntry.Left == e.Left);
-
-            // Duplicate trade (possible extra message at end or other players)
-            foreach (var broker in duplicates)
-            {
-                broker.AddLogEntry(e);
-                bFound = true;
-            }
-
-            return bFound;
+            return bTaken;
         }
 
         /// <summary>
@@ -215,7 +176,7 @@ namespace PoeAcolyte.Helpers
         /// <summary>
         /// List of active trades (used for routing log entries)
         /// </summary>
-        public List<IPoeTradeControl> TradeControls { get; } = new();
+        public List<ITrade> ActiveTrades { get; } = new();
 
         #endregion
     }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PoeAcolyte.UI
+namespace PoeAcolyte
 {
     partial class Overlay
     {

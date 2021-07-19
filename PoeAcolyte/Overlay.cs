@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
-using PoeAcolyte.Helpers;
-using Serilog;
 
-namespace PoeAcolyte.UI
+namespace PoeAcolyte
 {
     public partial class Overlay : Form
     {

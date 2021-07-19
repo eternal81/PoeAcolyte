@@ -4,42 +4,24 @@ using PoeAcolyte.UI;
 
 namespace PoeAcolyte.DataTypes
 {
-    public class BulkTrade : Trade, IPoeTradeControl
+    public class BulkTrade : Trade
     {
-        private readonly BulkTradeControl _bulkTradeControl;
+        protected override Control StatusControl => _bulkTradeControl.lblStatus;
+        protected override ToolStripItemCollection MenuItems => _bulkTradeControl.ContextMenuStrip.Items;
         public override UserControl GetUserControl => _bulkTradeControl;
-        public sealed override PoeLogEntry ActiveLogEntry
-        {
-            get => ActiveEntry;
-            set
-            {
-                ActiveEntry = value;
-                _bulkTradeControl.UpdateControls(ActiveEntry);
-            }
-        }
+        private readonly BulkTradeControl _bulkTradeControl;
 
         public BulkTrade(PoeLogEntry entry) : base(entry)
         {
             _bulkTradeControl = new BulkTradeControl();
+            
             ActiveLogEntry = entry;
-            SetContext();
+            BuildContextMenuStrip();
         }
 
-        private void SetContext()
+        public override void UpdateControls()
         {
-            _bulkTradeControl.ContextMenuStrip.Items.Clear();
-            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("No Thanks", Decline));
-            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Invite", Invite, true));
-            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Trade", DoTrade, true));
-            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Out of stock", NoStock));
-            _bulkTradeControl.ContextMenuStrip.Items.Add(MakeMenuItem("Close", Close));
-            _bulkTradeControl.ContextMenuStrip.Items.Add(PlayersMenu);
-            PlayersMenu.DropDownItems.Add(AddPlayerToMenu(ActiveEntry, SetActiveEntry));
-        }
-        
-        public void AddLogEntry(PoeLogEntry entry)
-        {
-            throw new NotImplementedException();
+            _bulkTradeControl.UpdateControls(ActiveLogEntry);
         }
 
         public override bool TakeLogEntry(PoeLogEntry entry)
@@ -49,9 +31,9 @@ namespace PoeAcolyte.DataTypes
             if (entry.Incoming == ActiveLogEntry.Incoming && entry.Outgoing == ActiveLogEntry.Outgoing &&
                 entry.BuyPriceUnits == ActiveLogEntry.BuyPriceUnits && entry.PriceUnits == ActiveLogEntry.PriceUnits)
             {
-                LogEntries.Add(entry);
+                _LogEntries.Add(entry);
                 var suffix = $"{entry.Player}  {entry.PriceAmount} {entry.PriceUnits} ► {entry.BuyPriceAmount} {entry.BuyPriceUnits}";
-                PlayersMenu.DropDownItems.Add(AddPlayerToMenu(entry, SetActiveEntry, suffix));
+                _PlayersMenu.DropDownItems.Add(AddPlayerToMenu(entry, SetActiveEntry, suffix));
                 return true;
             }
 
@@ -61,6 +43,7 @@ namespace PoeAcolyte.DataTypes
         public override void Dispose()
         {
             _bulkTradeControl.Dispose();
+            
         }
         
     }
