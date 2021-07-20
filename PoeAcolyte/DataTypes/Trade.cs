@@ -9,14 +9,14 @@ namespace PoeAcolyte.DataTypes
     public abstract class Trade : IDisposable, ITrade
     {
         protected abstract Control StatusControl { get; }
-        protected abstract ToolStripItemCollection MenuItems { get; }
         public abstract UserControl GetUserControl { get; }
-        public event EventHandler Disposed;
         private ITrade.TradeStatus _activeTradeStatus;
-        protected readonly ToolStripMenuItem _PlayersMenu = new("Players");
+        private readonly ToolStripMenuItem _playersMenu = new("Players");
         private PoeLogEntry _activeEntry;
-        protected readonly List<PoeLogEntry> _LogEntries = new();
+        private readonly List<PoeLogEntry> _logEntries = new();     
+        private readonly Timer _clickTimer = new Timer() {Interval = SystemInformation.DoubleClickTime};
         public bool IsBusy { get; set; }
+        public event EventHandler Disposed;
 
         private ITrade.TradeStatus ActiveTradeStatus
         {
@@ -50,7 +50,7 @@ namespace PoeAcolyte.DataTypes
             }
         }
 
-        public IEnumerable<string> Players => _LogEntries.Select(o => o.Player).Distinct();
+        public IEnumerable<string> Players => _logEntries.Select(o => o.Player).Distinct();
 
         public PoeLogEntry ActiveLogEntry
         {
@@ -64,37 +64,61 @@ namespace PoeAcolyte.DataTypes
 
         protected Trade(PoeLogEntry entry)
         {
-            _LogEntries.Add(entry);
+            _logEntries.Add(entry);
+
+            _clickTimer.Tick += (sender, args) =>
+            {
+                _clickTimer.Stop();
+                SingleClick().Invoke();
+            };
         }
 
         public abstract void UpdateControls();
 
         public abstract bool TakeLogEntry(PoeLogEntry entry);
 
-        public abstract void Dispose();
+        public void Dispose()
+        {
+            GetUserControl.Dispose();
+        }
+        
+        protected void BindClickControl()
+        {
+            foreach (Control control in GetUserControl.Controls)
+            {
+                control.Click += (sender, args) => { _clickTimer.Start(); };
+                control.DoubleClick += (sender, args) =>
+                {
+                    _clickTimer.Stop();
+                    DoubleClick().Invoke();
+                };
+            }
+        }
 
         protected void BuildContextMenuStrip()
         {
-            MenuItems.Clear();
-            MenuItems.Add(MakeMenuItem("No Thanks", Decline));
-            MenuItems.Add(MakeMenuItem("Wait", AskToWait, true));
-            MenuItems.Add(MakeMenuItem("Invite", Invite, true));
-            MenuItems.Add(MakeMenuItem("Trade", DoTrade, true));
-            MenuItems.Add(MakeMenuItem("Out of stock", NoStock));
-            MenuItems.Add(MakeMenuItem("WhoIs", WhoIs));
-            MenuItems.Add(MakeMenuItem("Close", Close));
-            MenuItems.Add(_PlayersMenu);
-            _PlayersMenu.DropDownItems.Add(AddPlayerToMenu(_activeEntry, SetActiveEntry));
+            var menuItems = GetUserControl.ContextMenuStrip.Items;
+            menuItems.Clear();
+            menuItems.Add(MakeMenuItem("No Thanks", Decline));
+            menuItems.Add(MakeMenuItem("Wait", AskToWait, true));
+            menuItems.Add(MakeMenuItem("Invite", Invite, true));
+            menuItems.Add(MakeMenuItem("Trade", DoTrade, true));
+            menuItems.Add(MakeMenuItem("TY GL", TradeComplete));
+            menuItems.Add(MakeMenuItem("Out of stock", NoStock));
+            menuItems.Add(MakeMenuItem("WhoIs", WhoIs));
+            menuItems.Add(MakeMenuItem("Close", Close));
+            menuItems.Add(_playersMenu);
+            _playersMenu.DropDownItems.Add(AddPlayerToMenu(_activeEntry, logEntry => ActiveLogEntry = logEntry));
         }
 
         private void RemoveTrade(PoeLogEntry entry, bool bRemoveAll = false)
         {
-            _LogEntries.Remove(entry);
-            var remainingTrades = _LogEntries.Where(logEntry =>
+            _logEntries.Remove(entry);
+            var remainingTrades = _logEntries.Where(logEntry =>
                 logEntry.PoeLogEntryType != IPoeLogEntry.PoeLogEntryTypeEnum.Whisper).ToArray();
             if (remainingTrades.Any() && !bRemoveAll)
             {
-                _PlayersMenu.DropDownItems.RemoveByKey(entry.Player);
+                _playersMenu.DropDownItems.RemoveByKey(entry.Player);
                 _activeEntry = remainingTrades.First();
                 UpdateControls();
             }
@@ -107,13 +131,35 @@ namespace PoeAcolyte.DataTypes
             if (entry.PoeLogEntryType != IPoeLogEntry.PoeLogEntryTypeEnum.Whisper ||
                 !Players.Contains(entry.Player)) return false;
 
-            var match = _PlayersMenu.DropDownItems.Find(entry.Player, false);
+            var match = _playersMenu.DropDownItems.Find(entry.Player, false);
             if (!match.Any()) return false;
 
             var menuItem = (ToolStripMenuItem) match.First();
             menuItem.DropDownItems.Add(entry.Other);
-            _LogEntries.Add(entry);
+            _logEntries.Add(entry);
             return true;
+        }
+
+        protected Action SingleClick()
+        {
+            return ActiveTradeStatus switch
+            {
+                ITrade.TradeStatus.None => AskToWait,
+                ITrade.TradeStatus.AskedToWait => Invite,
+                ITrade.TradeStatus.Invited => DoTrade,
+                _ => DoTrade
+            };
+        }
+
+        protected Action DoubleClick()
+        {
+            return ActiveTradeStatus switch
+            {
+                ITrade.TradeStatus.None => Invite,
+                ITrade.TradeStatus.Invited => DoTrade,
+                ITrade.TradeStatus.Traded => TradeComplete,
+                _ => DoTrade
+            };
         }
 
         protected Action AskToWait => () =>
@@ -156,13 +202,13 @@ namespace PoeAcolyte.DataTypes
             Program.GameBroker.Service.SendCommandToClient($"@/whois {ActiveLogEntry.Player}");
         };
 
-        protected Action Close => Dispose;
-
-        protected Action<PoeLogEntry> SetActiveEntry => delegate(PoeLogEntry entry)
+        protected Action TradeComplete => () =>
         {
-            ActiveLogEntry = entry;
-            // TODO do we need to update controls or leave it to the property?
+            Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Thank you and Good Luck");
+            RemoveTrade(_activeEntry);
         };
+
+        protected Action Close => Dispose;
 
 
         /// <summary>
@@ -193,10 +239,15 @@ namespace PoeAcolyte.DataTypes
         protected static ToolStripMenuItem AddPlayerToMenu(PoeLogEntry entry, Action<PoeLogEntry> action,
             string suffix = "")
         {
-            // TODO refactor this to just inline the action or just put active entry in the ret.click?
             var ret = new ToolStripMenuItem(entry.Player + suffix) {Name = entry.Player};
             ret.Click += (sender, args) => { action(entry); };
             return ret;
+        }
+
+        protected void AddPlayer(PoeLogEntry entry, string suffix = "")
+        {
+            _logEntries.Add(entry);
+            _playersMenu.DropDownItems.Add(AddPlayerToMenu(entry, logEntry => ActiveLogEntry = logEntry, suffix));
         }
     }
 }

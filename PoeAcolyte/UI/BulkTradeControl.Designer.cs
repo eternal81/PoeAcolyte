@@ -135,9 +135,9 @@ namespace PoeAcolyte.UI
 
         public System.Windows.Forms.Label lblStatus;
 
-        private System.Windows.Forms.ContextMenuStrip contextMenu;
+        public System.Windows.Forms.ContextMenuStrip contextMenu;
 
-        private System.Windows.Forms.ToolTip toolTips;
+        public System.Windows.Forms.ToolTip toolTips;
 
         public System.Windows.Forms.PictureBox pbTradeDirection;
 

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using PoeAcolyte.Service;
-using PoeAcolyte.UI;
 
 namespace PoeAcolyte.DataTypes
 {

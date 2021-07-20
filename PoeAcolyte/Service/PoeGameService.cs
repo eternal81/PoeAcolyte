@@ -57,7 +57,7 @@ namespace PoeAcolyte.Service
         /// <param name="e">not used</param>
         private void SearchTimerOnElapsed(object sender, ElapsedEventArgs e)
         {
-            Debug.Print("Searching for POE");
+            //Debug.Print("Searching for POE");
 
             _poeProcess = GetPoeProcess();
             if (_poeProcess == null) return;

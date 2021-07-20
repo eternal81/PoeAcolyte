@@ -91,7 +91,7 @@ namespace PoeAcolyte.UI
             // contextMenu
             // 
             this.contextMenu.Name = "contextMenu";
-            this.contextMenu.Size = new System.Drawing.Size(153, 26);
+            this.contextMenu.Size = new System.Drawing.Size(61, 4);
             // 
             // SingleTradeControl
             // 
@@ -110,9 +110,9 @@ namespace PoeAcolyte.UI
             this.ResumeLayout(false);
         }
 
-        private System.Windows.Forms.ContextMenuStrip contextMenu;
+        public System.Windows.Forms.ContextMenuStrip contextMenu;
 
-        private System.Windows.Forms.ToolTip toolTips;
+        public System.Windows.Forms.ToolTip toolTips;
 
         public System.Windows.Forms.PictureBox pbTradeDirection;
 
