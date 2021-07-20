@@ -43,7 +43,7 @@ namespace PoeAcolyte.DataTypes
                 entry.BuyPriceUnits == ActiveLogEntry.BuyPriceUnits && entry.PriceUnits == ActiveLogEntry.PriceUnits)
             {
                 var suffix =
-                    $"{entry.Player}  {entry.PriceAmount} {entry.PriceUnits} ► {entry.BuyPriceAmount} {entry.BuyPriceUnits}";
+                    $" {entry.PriceAmount} {entry.PriceUnits} ► {entry.BuyPriceAmount} {entry.BuyPriceUnits}";
                 AddPlayer(entry, suffix);
                 return true;
             }

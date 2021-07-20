@@ -41,6 +41,7 @@ namespace PoeAcolyte.Service
         /// </summary>
         public PoeGameService()
         {
+            _poeProcess = GetPoeProcess();
             _searchTimer = new Timer()
             {
                 Interval = 5000,
@@ -96,6 +97,7 @@ namespace PoeAcolyte.Service
         {
             if (!FocusPoe()) return false;
             WindowsInput.Simulate.Events()
+                .Wait(waitTime)
                 .Click(KeyCode.Enter).Wait(waitTime)
                 .Click(command).Wait(waitTime)
                 .Click(KeyCode.Enter).Wait(waitTime)

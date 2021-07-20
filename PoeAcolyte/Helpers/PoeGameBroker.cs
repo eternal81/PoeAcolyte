@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Service;
 using PoeAcolyte.UI;
+using Timer = System.Threading.Timer;
 
 namespace PoeAcolyte.Helpers
 {
@@ -140,6 +143,19 @@ namespace PoeAcolyte.Helpers
         {
             LogReader.ManualFire(raw);
         }
+        /// <summary>
+        /// For debugging and testing, fires all
+        /// </summary>
+        public void ManualFire()
+        {
+            using StreamReader stream = new  StreamReader(File.Open(@"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\test.txt", 
+                FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            
+            while (!stream.EndOfStream)
+            {
+                LogReader.ManualFire(stream.ReadLine());
+            }
+        }
 
         /// <summary>
         /// Update control locations based on the settings (<see cref="TradePanel"/>)
@@ -179,5 +195,6 @@ namespace PoeAcolyte.Helpers
         public List<ITrade> ActiveTrades { get; } = new();
 
         #endregion
+
     }
 }

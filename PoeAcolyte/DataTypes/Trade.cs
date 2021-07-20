@@ -102,6 +102,7 @@ namespace PoeAcolyte.DataTypes
             menuItems.Add(MakeMenuItem("No Thanks", Decline));
             menuItems.Add(MakeMenuItem("Wait", AskToWait, true));
             menuItems.Add(MakeMenuItem("Invite", Invite, true));
+            menuItems.Add(MakeMenuItem("Hideout", Hideout));
             menuItems.Add(MakeMenuItem("Trade", DoTrade, true));
             menuItems.Add(MakeMenuItem("TY GL", TradeComplete));
             menuItems.Add(MakeMenuItem("Out of stock", NoStock));
@@ -118,7 +119,10 @@ namespace PoeAcolyte.DataTypes
                 logEntry.PoeLogEntryType != IPoeLogEntry.PoeLogEntryTypeEnum.Whisper).ToArray();
             if (remainingTrades.Any() && !bRemoveAll)
             {
-                _playersMenu.DropDownItems.RemoveByKey(entry.Player);
+                // TODO causing program to hang
+                var t = _playersMenu.DropDownItems.Find(entry.Player, false);
+                if (t.Any())
+                    _playersMenu.DropDownItems.Remove(t.First());
                 _activeEntry = remainingTrades.First();
                 UpdateControls();
             }
@@ -173,11 +177,15 @@ namespace PoeAcolyte.DataTypes
 
         protected Action Invite => () =>
         {
+            //Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Ready for pickup");
             Program.GameBroker.Service.SendCommandToClient($"/invite {ActiveLogEntry.Player}");
-            Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Ready for pickup");
+            
             ActiveTradeStatus = ITrade.TradeStatus.Invited;
         };
-
+        protected Action Hideout => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient($"/hideout {ActiveLogEntry.Player}");
+        };
         protected Action DoTrade => () =>
         {
             Program.GameBroker.Service.SendCommandToClient($"/tradewith {ActiveLogEntry.Player}");
