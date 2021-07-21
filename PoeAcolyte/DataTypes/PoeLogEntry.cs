@@ -267,7 +267,7 @@ namespace PoeAcolyte.DataTypes
                 IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade =>
                     $"{Item}\r\n ({StashTab}) TL: {Top}, {Left}\r\n{Player} \r\n({League}) {PoeLogEntryType}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.UnpricedTrade =>
-                    $"{Item}\r\n" + $"{Player} \r\n ({League}) {PoeLogEntryType}",
+                    $"{Item}\r\n ({StashTab}) TL: {Top}, {Left}\r\n{Player} \r\n({League}) {PoeLogEntryType}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.Whisper => $"({Player} - {Other}",
                 IPoeLogEntry.PoeLogEntryTypeEnum.AreaJoined => $"{Player} joined",
                 IPoeLogEntry.PoeLogEntryTypeEnum.AreaLeft => $"{Player} left",

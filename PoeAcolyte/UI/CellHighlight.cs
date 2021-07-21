@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Gma.System.MouseKeyHook;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Helpers;
 
@@ -23,11 +26,27 @@ namespace PoeAcolyte.UI
             InitializeComponent();
         }
 
-        public CellHighlight(PoeLogEntry logEntry, PoeSettings settings) : this()
+        public CellHighlight(PoeLogEntry logEntry) : this()
         {
-            
+            float gridX = 24;
+            float gridY = 24;
+            float widthPerCell = Program.GameBroker.Settings.StashTab.Size.Width / gridX;
+            float heightPerCell = Program.GameBroker.Settings.StashTab.Size.Height / gridY;
+            float x = Program.GameBroker.Settings.StashTab.Location.X +( (logEntry.Left - 1) * widthPerCell);
+            float y = Program.GameBroker.Settings.StashTab.Location.Y +( (logEntry.Top - 1) * heightPerCell);
             Show();
-            Location = settings.StashTab.Location;
+            // auto dispose
+            Hook.GlobalEvents().MouseClick += OnGlobalMouseClick; 
+            Location = new Point((int)x, (int)y);
+            Size = new Size((int)widthPerCell, (int)heightPerCell);
+        }
+
+        private void OnGlobalMouseClick(object sender, MouseEventArgs e)
+        {
+            if(new Rectangle(Location, Size).Contains(e.Location))
+            {
+                Dispose();    
+            }
         }
 
         protected override void OnLoad(EventArgs e)

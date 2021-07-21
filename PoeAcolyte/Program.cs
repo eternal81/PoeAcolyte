@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows.Forms;
+using WindowsInput.Native;
 using PoeAcolyte.Helpers;
 using PoeAcolyte.Service;
 using PoeAcolyte.UI;
@@ -45,6 +47,14 @@ namespace PoeAcolyte
                 LogReader = new PoeLogReader(),
                 Service = new PoeGameService(),
             };
+            using (var mouse = WindowsInput.Capture.Global.MouseAsync())
+            {
+                mouse.ButtonClick += (sender, args) =>
+                {
+                    
+                    //Debug.Print($"Cell highlight {this.Location} Button {MousePosition}");
+                };
+            }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Overlay());

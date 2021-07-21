@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using PoeAcolyte.UI;
 
 namespace PoeAcolyte.DataTypes
 {
@@ -15,10 +16,11 @@ namespace PoeAcolyte.DataTypes
         private PoeLogEntry _activeEntry;
         private readonly List<PoeLogEntry> _logEntries = new();     
         private readonly Timer _clickTimer = new Timer() {Interval = SystemInformation.DoubleClickTime};
+
         public bool IsBusy { get; set; }
         public event EventHandler Disposed;
 
-        private ITrade.TradeStatus ActiveTradeStatus
+        protected ITrade.TradeStatus ActiveTradeStatus
         {
             get => _activeTradeStatus;
             set
@@ -77,8 +79,9 @@ namespace PoeAcolyte.DataTypes
 
         public abstract bool TakeLogEntry(PoeLogEntry entry);
 
-        public void Dispose()
+        public virtual void Dispose()
         {
+            
             GetUserControl.Dispose();
         }
         
@@ -144,7 +147,7 @@ namespace PoeAcolyte.DataTypes
             return true;
         }
 
-        protected Action SingleClick()
+        protected virtual Action SingleClick()
         {
             return ActiveTradeStatus switch
             {
@@ -155,6 +158,7 @@ namespace PoeAcolyte.DataTypes
             };
         }
 
+        
         protected Action DoubleClick()
         {
             return ActiveTradeStatus switch
@@ -226,7 +230,7 @@ namespace PoeAcolyte.DataTypes
         /// <param name="action"></param>
         /// <param name="checkOnClick"></param>
         /// <returns></returns>
-        private static ToolStripMenuItem MakeMenuItem(string text, Action action, bool checkOnClick = false)
+        protected static ToolStripMenuItem MakeMenuItem(string text, Action action, bool checkOnClick = false)
         {
             var ret = new ToolStripMenuItem(text) {Name = text};
             ret.Click += (sender, args) =>
