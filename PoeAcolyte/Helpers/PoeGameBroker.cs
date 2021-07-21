@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -17,36 +18,24 @@ namespace PoeAcolyte.Helpers
     public class PoeGameBroker
     {
         /// <summary>
-        /// Default constructor. Loads in <see cref="PoeSettings"/>, <see cref="PoeGameService"/>,
-        /// <see cref="PoeLogReader"/> and hooks to log events
+        /// Default constructor. Auto loads in <see cref="PoeSettings"/> - You must specify <see cref="PoeGameService"/>,
+        /// <see cref="PoeLogReader"/> to hook to log and client events
         /// </summary>
         public PoeGameBroker()
         {
             Settings = PoeSettings.Load();
-            Service = new PoeGameService();
-            LogReader = new PoeLogReader();
-            LogReader.PricedTrade += LogReaderOnSingleTrade;
-            LogReader.BulkTrade += LogReaderOnBulkTrade;
-            LogReader.Whisper += LogReaderOnWhisper;
-            LogReader.YouJoin += LogReaderOnYouJoin;
-            LogReader.UnpricedTrade += LogReaderOnSingleTrade;
-            
-            // Automatically search client log if POE is open
-            Service.PoeConnected += (_, args) =>
-            {
-                Program.Log.Verbose("PoeGameBroker - Client {conn}", args.IsConnected ? "connected":"disconnected");
-                LogReader.IsRunning = args.IsConnected;
-            };
+            // Service = new PoeGameService();
+            // LogReader = new PoeLogReader();
         }
 
-        /// <summary>
-        /// Constructor that sets up <see cref="TradePanel"/>
-        /// </summary>
-        /// <param name="tradePanel"><see cref="TradePanel"/> to use</param>
-        public PoeGameBroker(Control tradePanel) : this()
-        {
-            TradePanel = tradePanel;
-        }
+        // /// <summary>
+        // /// Constructor that sets up <see cref="TradePanel"/>
+        // /// </summary>
+        // /// <param name="tradePanel"><see cref="TradePanel"/> to use</param>
+        // public PoeGameBroker(Control tradePanel) : this()
+        // {
+        //     TradePanel = tradePanel;
+        // }
 
         /// <summary>
         /// Event handler for <see cref="IPoeLogReader.YouJoin"/>
@@ -84,17 +73,35 @@ namespace PoeAcolyte.Helpers
         {
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
-            
-            // Brand new request
-            ITrade tradeControl = new BulkTrade(e.LogEntry);
 
+            // Brand new request
+            AddTrade( new BulkTrade(e.LogEntry));
+            
+        }
+
+        /// <summary>
+        /// Add the trade control (Has to be cross thread safe to UI)
+        /// </summary>
+        /// <param name="tradeControl"></param>
+        private void AddTrade(ITrade tradeControl)
+        {
             tradeControl.Disposed += (_, _) =>
             {
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
                 ActiveTrades.Remove(tradeControl);
             };
             ActiveTrades.Add(tradeControl);
-            TradePanel.Controls.Add(tradeControl.GetUserControl);
+            
+            // Needs to be thread safe to UI
+            if (TradePanel.InvokeRequired)
+            {
+                TradePanel.Invoke(new Action(() => { TradePanel.Controls.Add(tradeControl.GetUserControl); }));
+            }
+            else
+            {
+                TradePanel.Controls.Add(tradeControl.GetUserControl);
+            }
+            //TradePanel.Controls.Add(tradeControl.GetUserControl);
         }
 
         /// <summary>
@@ -109,29 +116,44 @@ namespace PoeAcolyte.Helpers
             if (DuplicateItem(e.LogEntry)) return;
 
             // Brand new request
-            ITrade tradeControl = new SingleTrade(e.LogEntry);
+            AddTrade(new SingleTrade(e.LogEntry));
 
-            tradeControl.Disposed += (_, _) =>
-            {
-                TradePanel.Controls.Remove(tradeControl.GetUserControl);
-                ActiveTrades.Remove(tradeControl);
-            };
-            ActiveTrades.Add(tradeControl);
-            TradePanel.Controls.Add(tradeControl.GetUserControl);
+            // tradeControl.Disposed += (_, _) =>
+            // {
+            //     TradePanel.Controls.Remove(tradeControl.GetUserControl);
+            //     ActiveTrades.Remove(tradeControl);
+            // };
+            // ActiveTrades.Add(tradeControl);
+            //
+            // TradePanel.Controls.Add(tradeControl.GetUserControl);
         }
 
         /// <summary>
-        /// See if item already has an existing trade control
+        /// See if item already has an existing trade control (Has to be cross threaded to UI)
         /// </summary>
         /// <param name="e"><see cref="PoeLogEntry"/> to compare against</param>
         /// <returns>true if <see cref="ActiveTrades"/> contains the entry, false if not</returns>
         private bool DuplicateItem(PoeLogEntry e)
         {
             var bTaken = false;
-            foreach (var trade in ActiveTrades.Where(trade => trade.ActiveLogEntry.PoeLogEntryType == e.PoeLogEntryType))
+            foreach (var trade in ActiveTrades.Where(trade =>
+                trade.ActiveLogEntry.PoeLogEntryType == e.PoeLogEntryType))
             {
-                if (trade.TakeLogEntry(e)) bTaken = true;
+                // Cross thread to UI
+                if (trade.GetUserControl.InvokeRequired)
+                {
+                    trade.GetUserControl.Invoke(new Action(() =>
+                    {
+                        if (trade.TakeLogEntry(e)) bTaken = true;
+                    }));
+                }
+                else
+                {
+                    if (trade.TakeLogEntry(e)) bTaken = true;
+                }
+                
             }
+
             return bTaken;
         }
 
@@ -143,14 +165,16 @@ namespace PoeAcolyte.Helpers
         {
             LogReader.ManualFire(raw);
         }
+
         /// <summary>
         /// For debugging and testing, fires all
         /// </summary>
         public void ManualFire()
         {
-            using StreamReader stream = new  StreamReader(File.Open(@"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\test.txt", 
+            using StreamReader stream = new StreamReader(File.Open(
+                @"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\test.txt",
                 FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-            
+
             while (!stream.EndOfStream)
             {
                 LogReader.ManualFire(stream.ReadLine());
@@ -182,12 +206,38 @@ namespace PoeAcolyte.Helpers
         /// <summary>
         /// Broker to handle interaction with the POE client
         /// </summary>
-        public PoeGameService Service { get; }
+        public PoeGameService Service
+        {
+            get => _service;
+            set
+            {
+                _service = value;
+                // Automatically search client log if POE is open
+                Service.PoeConnected += (_, args) =>
+                {
+                    Program.Log.Verbose("PoeGameBroker - Client {conn}",
+                        args.IsConnected ? "connected" : "disconnected");
+                    LogReader.IsRunning = args.IsConnected;
+                };
+            }
+        }
 
         /// <summary>
         /// Broker to handle interaction with the POE logs
         /// </summary>
-        public PoeLogReader LogReader { get; }
+        public PoeLogReader LogReader
+        {
+            get => _logReader;
+            set
+            {
+                _logReader = value;
+                LogReader.PricedTrade += LogReaderOnSingleTrade;
+                LogReader.BulkTrade += LogReaderOnBulkTrade;
+                LogReader.Whisper += LogReaderOnWhisper;
+                LogReader.YouJoin += LogReaderOnYouJoin;
+                LogReader.UnpricedTrade += LogReaderOnSingleTrade;
+            }
+        }
 
         /// <summary>
         /// List of active trades (used for routing log entries)
@@ -196,5 +246,7 @@ namespace PoeAcolyte.Helpers
 
         #endregion
 
+        private PoeGameService _service;
+        private PoeLogReader _logReader;
     }
 }

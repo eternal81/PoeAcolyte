@@ -107,6 +107,7 @@ namespace PoeAcolyte.Service
             {
                 case IPoeLogEntry.PoeLogEntryTypeEnum.Whisper:
                     Whisper?.Invoke(this, eventArgs);
+                    
                     break;
                 case IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade:
                     PricedTrade?.Invoke(this, eventArgs);
