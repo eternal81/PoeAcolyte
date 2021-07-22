@@ -32,6 +32,8 @@ namespace PoeAcolyte.Helpers
         /// <param name="e"><see cref="IPoeLogReader.PoeLogEventArgs"/></param>
         private void LogReaderOnYouJoin(object sender, IPoeLogReader.PoeLogEventArgs e)
         {
+            // TODO add area search pattern with average time between map or specific zones
+            // (i.e. avg time to kill shaper) minus time currently spent in zone
             foreach (var tradeControl in ActiveTrades)
             {
                 tradeControl.IsBusy = !e.LogEntry.Area.Contains("Hideout");

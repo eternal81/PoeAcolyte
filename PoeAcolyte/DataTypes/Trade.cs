@@ -8,16 +8,103 @@ namespace PoeAcolyte.DataTypes
 {
     public abstract class Trade : IDisposable, ITrade
     {
-        protected abstract Control StatusControl { get; }
-        public abstract UserControl GetUserControl { get; }
-        private ITrade.TradeStatus _activeTradeStatus;
+        private readonly Timer _clickTimer = new() {Interval = SystemInformation.DoubleClickTime};
+        private readonly List<PoeLogEntry> _logEntries = new();
         private readonly ToolStripMenuItem _playersMenu = new("Players");
         private PoeLogEntry _activeEntry;
-        private readonly List<PoeLogEntry> _logEntries = new();
-        private readonly Timer _clickTimer = new Timer() {Interval = SystemInformation.DoubleClickTime};
-        protected abstract Control IsBusyControl { get; }
+        private ITrade.TradeStatus _activeTradeStatus;
         private bool _isBusy;
-        public virtual bool IsBusy {
+
+        protected Trade(PoeLogEntry entry)
+        {
+            _logEntries.Add(entry);
+
+            _clickTimer.Tick += (sender, args) =>
+            {
+                _clickTimer.Stop();
+                SingleClick().Invoke();
+            };
+        }
+
+        protected abstract Control StatusControl { get; }
+        protected abstract Control IsBusyControl { get; }
+
+        protected Action AskToWait => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient(
+                $"@{ActiveLogEntry.Player} Busy at the moment, will invite when I am done with what I am doing");
+            ActiveTradeStatus = ITrade.TradeStatus.AskedToWait;
+        };
+
+        protected virtual Action Invite => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient(new[]
+            {
+                $"@{ActiveLogEntry.Player} Ready for pickup",
+                $"/invite {ActiveLogEntry.Player}"
+            });
+
+            ActiveTradeStatus = ITrade.TradeStatus.Invited;
+            //Program.GameBroker.Service.SendCommandToClient($"/invite {ActiveLogEntry.Player}");
+        };
+
+        protected Action Hideout => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient($"/hideout {ActiveLogEntry.Player}");
+        };
+
+        protected Action DoTrade => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient($"/tradewith {ActiveLogEntry.Player}");
+            ActiveTradeStatus = ITrade.TradeStatus.Traded;
+        };
+
+        protected Action NoStock => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Sold out");
+            ActiveTradeStatus = ITrade.TradeStatus.OutOfStock;
+            RemoveTrade(_activeEntry);
+        };
+
+        protected Action Decline => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient(new[]
+            {
+                $"@{ActiveLogEntry.Player} No thanks",
+                $"/kick {ActiveLogEntry.Player}"
+            });
+            ActiveTradeStatus = ITrade.TradeStatus.Declined;
+            RemoveTrade(_activeEntry);
+        };
+
+        protected Action WhoIs => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient($"@/whois {ActiveLogEntry.Player}");
+        };
+
+        protected Action TradeComplete => () =>
+        {
+            Program.GameBroker.Service.SendCommandToClient(new[]
+            {
+                $"@{ActiveLogEntry.Player} Thank you and Good Luck",
+                $"/kick {ActiveLogEntry.Player}"
+            });
+            ActiveTradeStatus = ITrade.TradeStatus.TradeComplete;
+            RemoveTrade(_activeEntry);
+        };
+
+        protected Action Close => Dispose;
+
+        public virtual void Dispose()
+        {
+            GetUserControl.Dispose();
+            Disposed?.Invoke(this, EventArgs.Empty);
+        }
+
+        public abstract UserControl GetUserControl { get; }
+
+        public virtual bool IsBusy
+        {
             get => _isBusy;
             set
             {
@@ -25,6 +112,7 @@ namespace PoeAcolyte.DataTypes
                 IsBusyControl.BackColor = _isBusy ? Color.Red : Color.Green;
             }
         }
+
         public event EventHandler Disposed;
 
         public ITrade.TradeStatus ActiveTradeStatus
@@ -71,29 +159,13 @@ namespace PoeAcolyte.DataTypes
             }
         }
 
-        protected Trade(PoeLogEntry entry)
-        {
-            _logEntries.Add(entry);
-            
-            _clickTimer.Tick += (sender, args) =>
-            {
-                _clickTimer.Stop();
-                SingleClick().Invoke();
-            };
-        }
+        public abstract bool TakeLogEntry(PoeLogEntry entry);
 
         public abstract void UpdateControls();
 
-        public abstract bool TakeLogEntry(PoeLogEntry entry);
-
-        public virtual void Dispose()
-        {
-            GetUserControl.Dispose();
-            Disposed?.Invoke(this, EventArgs.Empty);
-        }
-
         protected void BindClickControl()
-        {// TODO make an extension or roll into userform controls?
+        {
+            // TODO make an extension or roll into userform controls?
             foreach (Control control in GetUserControl.Controls)
             {
                 control.Click += (sender, args) => { _clickTimer.Start(); };
@@ -127,7 +199,7 @@ namespace PoeAcolyte.DataTypes
             _logEntries.Remove(entry);
             var remainingTrades = _logEntries.Where(logEntry =>
                 logEntry.PoeLogEntryType != IPoeLogEntry.PoeLogEntryTypeEnum.Whisper).ToArray();
-            
+
             if (!remainingTrades.Any() || bRemoveAll)
             {
                 Dispose();
@@ -179,74 +251,9 @@ namespace PoeAcolyte.DataTypes
             };
         }
 
-        protected Action AskToWait => () =>
-        {
-            // TODO add area search pattern with average time between map or specific zones
-            // (i.e. avg time to kill shaper) minus time currently spent in zone
-            Program.GameBroker.Service.SendCommandToClient(
-                $"@{ActiveLogEntry.Player} Busy at the moment, will invite when I am done with what I am doing");
-            ActiveTradeStatus = ITrade.TradeStatus.AskedToWait;
-        };
-
-        protected virtual Action Invite => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient(new[] {
-                $"@{ActiveLogEntry.Player} Ready for pickup", 
-                $"/invite {ActiveLogEntry.Player}"
-            });
-            
-            ActiveTradeStatus = ITrade.TradeStatus.Invited;
-            //Program.GameBroker.Service.SendCommandToClient($"/invite {ActiveLogEntry.Player}");
-        };
-
-        protected Action Hideout => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient($"/hideout {ActiveLogEntry.Player}");
-        };
-
-        protected Action DoTrade => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient($"/tradewith {ActiveLogEntry.Player}");
-            ActiveTradeStatus = ITrade.TradeStatus.Traded;
-        };
-
-        protected Action NoStock => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Sold out");
-            ActiveTradeStatus = ITrade.TradeStatus.OutOfStock;
-            RemoveTrade(_activeEntry);
-        };
-
-        protected Action Decline => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient(new[] {
-                $"@{ActiveLogEntry.Player} No thanks", 
-                $"/kick {ActiveLogEntry.Player}"
-            });
-            ActiveTradeStatus = ITrade.TradeStatus.Declined;
-            RemoveTrade(_activeEntry);
-        };
-
-        protected Action WhoIs => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient($"@/whois {ActiveLogEntry.Player}");
-        };
-
-        protected Action TradeComplete => () =>
-        {
-            Program.GameBroker.Service.SendCommandToClient(new[] {
-                $"@{ActiveLogEntry.Player} Thank you and Good Luck", 
-                $"/kick {ActiveLogEntry.Player}"
-            });
-            ActiveTradeStatus = ITrade.TradeStatus.TradeComplete;
-            RemoveTrade(_activeEntry);
-        };
-
-        protected Action Close => Dispose;
-
 
         /// <summary>
-        /// Generic context menu add
+        ///     Generic context menu add
         /// </summary>
         /// <param name="text"></param>
         /// <param name="action"></param>
@@ -264,7 +271,7 @@ namespace PoeAcolyte.DataTypes
         }
 
         /// <summary>
-        /// Used to make player entries for context menu
+        ///     Used to make player entries for context menu
         /// </summary>
         /// <param name="entry"></param>
         /// <param name="action"></param>
@@ -284,6 +291,5 @@ namespace PoeAcolyte.DataTypes
             _playersMenu.DropDownItems.Add(AddPlayerToMenu(entry, logEntry => ActiveLogEntry = logEntry, suffix));
             // TODO add any suffix (other) information in the trade request here?
         }
-
     }
 }
