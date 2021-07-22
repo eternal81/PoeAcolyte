@@ -22,6 +22,7 @@ namespace PoeAcolyte.DataTypes
 
             BindClickControl();
             BuildContextMenuStrip();
+            CheckWhisper(entry);
         }
 
         public override void UpdateControls()

@@ -17,6 +17,7 @@ namespace PoeAcolyte.DataTypes
             OutOfStock
         }
 
+        public bool TakeMouseClick(MouseEventArgs args);
         public bool IsBusy { get; set; }
         public IEnumerable<string> Players { get; }
         public PoeLogEntry ActiveLogEntry { get; set; }

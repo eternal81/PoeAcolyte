@@ -101,6 +101,10 @@ namespace PoeAcolyte.DataTypes
             Disposed?.Invoke(this, EventArgs.Empty);
         }
 
+        public virtual bool TakeMouseClick(MouseEventArgs e)
+        {
+            return false;
+        }
         public abstract UserControl GetUserControl { get; }
 
         public virtual bool IsBusy

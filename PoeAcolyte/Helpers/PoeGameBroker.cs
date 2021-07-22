@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Gma.System.MouseKeyHook;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Service;
 
@@ -185,7 +187,17 @@ namespace PoeAcolyte.Helpers
                     Program.Log.Verbose("PoeGameBroker - Client {conn}",
                         args.IsConnected ? "connected" : "disconnected");
                     LogReader.IsRunning = args.IsConnected;
+                    if (args.IsConnected) Hook.GlobalEvents().MouseClick += OnMouseClick;
+                    else Hook.GlobalEvents().MouseClick -= OnMouseClick;
                 };
+            }
+        }
+
+        private void OnMouseClick(object sender, MouseEventArgs e)
+        {
+            foreach (ITrade trade in ActiveTrades)
+            {
+                trade.TakeMouseClick(e);
             }
         }
 

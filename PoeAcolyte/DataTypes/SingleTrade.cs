@@ -12,10 +12,10 @@ namespace PoeAcolyte.DataTypes
 
         private readonly SingleTradeControl _singleTradeControl;
         public override UserControl GetUserControl => _singleTradeControl;
-        
+
         protected CellHighlight _CellHighlight;
         protected override Control IsBusyControl => _singleTradeControl.pbTradeDirection;
-        
+
 
         public SingleTrade(PoeLogEntry entry) : base(entry)
         {
@@ -23,7 +23,7 @@ namespace PoeAcolyte.DataTypes
             ActiveLogEntry = entry;
             BindClickControl();
             BuildContextMenuStrip();
-
+            CheckWhisper(entry);
             // add single trade only context menu items
             var menuItems = _singleTradeControl.ContextMenuStrip.Items;
             menuItems.Add(MakeMenuItem("Show Cell", ShowCellHighlight));
@@ -67,17 +67,26 @@ namespace PoeAcolyte.DataTypes
                 _ => DoTrade
             };
         }
+
         protected override Action Invite => () =>
         {
             base.Invite();
             ShowCellHighlight();
         };
-        
+
         protected Action ShowCellHighlight => () => { _CellHighlight ??= new CellHighlight(ActiveLogEntry); };
+
+        public override bool TakeMouseClick(MouseEventArgs e)
+        {
+            if (_CellHighlight is null ||
+                !new Rectangle(_CellHighlight.Location, _CellHighlight.Size).Contains(e.Location)) return false;
+            _CellHighlight.Dispose();
+            return true;
+
+        }
 
         public override bool TakeLogEntry(PoeLogEntry entry)
         {
-            
             if (CheckWhisper(entry)) return true;
 
             if (entry.Incoming == ActiveLogEntry.Incoming && entry.Outgoing == ActiveLogEntry.Outgoing &&
