@@ -2,18 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Service;
-using PoeAcolyte.UI;
-using Timer = System.Threading.Timer;
 
 namespace PoeAcolyte.Helpers
 {
     /// <summary>
     /// Used to broker events from the client log, interact with the POE client, manage trade requests/controls
-    /// and load/save/modify settings
+    /// and load/save/modify settings. Also responsible for managing cross thread calls to GUI
     /// </summary>
     public class PoeGameBroker
     {
@@ -27,15 +24,6 @@ namespace PoeAcolyte.Helpers
             // Service = new PoeGameService();
             // LogReader = new PoeLogReader();
         }
-
-        // /// <summary>
-        // /// Constructor that sets up <see cref="TradePanel"/>
-        // /// </summary>
-        // /// <param name="tradePanel"><see cref="TradePanel"/> to use</param>
-        // public PoeGameBroker(Control tradePanel) : this()
-        // {
-        //     TradePanel = tradePanel;
-        // }
 
         /// <summary>
         /// Event handler for <see cref="IPoeLogReader.YouJoin"/>
@@ -60,7 +48,8 @@ namespace PoeAcolyte.Helpers
         {
             foreach (var trade in ActiveTrades.Where(trades => trades.Players.Contains(e.LogEntry.Player)))
             {
-                trade.TakeLogEntry(e.LogEntry);
+                // Thread safe to UI
+                trade.GetUserControl?.Invoke(new Action(() => { trade.TakeLogEntry(e.LogEntry); }));
             }
         }
 
@@ -76,7 +65,6 @@ namespace PoeAcolyte.Helpers
 
             // Brand new request
             AddTrade( new BulkTrade(e.LogEntry));
-            
         }
 
         /// <summary>
@@ -87,21 +75,15 @@ namespace PoeAcolyte.Helpers
         {
             tradeControl.Disposed += (_, _) =>
             {
+                // TODO add a memory of trades that were out of stock/sold etc to ignore for a given timeframe
+                // OutOfStock, TradeComplete
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
                 ActiveTrades.Remove(tradeControl);
             };
             ActiveTrades.Add(tradeControl);
             
             // Needs to be thread safe to UI
-            if (TradePanel.InvokeRequired)
-            {
-                TradePanel.Invoke(new Action(() => { TradePanel.Controls.Add(tradeControl.GetUserControl); }));
-            }
-            else
-            {
-                TradePanel.Controls.Add(tradeControl.GetUserControl);
-            }
-            //TradePanel.Controls.Add(tradeControl.GetUserControl);
+            TradePanel.Invoke(new Action(() => { TradePanel.Controls.Add(tradeControl.GetUserControl); }));
         }
 
         /// <summary>
@@ -115,17 +97,7 @@ namespace PoeAcolyte.Helpers
             // Add to existing if duplicate
             if (DuplicateItem(e.LogEntry)) return;
 
-            // Brand new request
             AddTrade(new SingleTrade(e.LogEntry));
-
-            // tradeControl.Disposed += (_, _) =>
-            // {
-            //     TradePanel.Controls.Remove(tradeControl.GetUserControl);
-            //     ActiveTrades.Remove(tradeControl);
-            // };
-            // ActiveTrades.Add(tradeControl);
-            //
-            // TradePanel.Controls.Add(tradeControl.GetUserControl);
         }
 
         /// <summary>
@@ -140,18 +112,10 @@ namespace PoeAcolyte.Helpers
                 trade.ActiveLogEntry.PoeLogEntryType == e.PoeLogEntryType))
             {
                 // Cross thread to UI
-                if (trade.GetUserControl.InvokeRequired)
-                {
-                    trade.GetUserControl.Invoke(new Action(() =>
-                    {
-                        if (trade.TakeLogEntry(e)) bTaken = true;
-                    }));
-                }
-                else
+                trade.GetUserControl.Invoke(new Action(() =>
                 {
                     if (trade.TakeLogEntry(e)) bTaken = true;
-                }
-                
+                }));
             }
 
             return bTaken;

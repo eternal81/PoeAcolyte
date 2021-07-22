@@ -35,7 +35,6 @@ namespace PoeAcolyte.UI
             float x = Program.GameBroker.Settings.StashTab.Location.X +( (logEntry.Left - 1) * widthPerCell);
             float y = Program.GameBroker.Settings.StashTab.Location.Y +( (logEntry.Top - 1) * heightPerCell);
             Show();
-            // auto dispose
             Hook.GlobalEvents().MouseClick += OnGlobalMouseClick; 
             Location = new Point((int)x, (int)y);
             Size = new Size((int)widthPerCell, (int)heightPerCell);

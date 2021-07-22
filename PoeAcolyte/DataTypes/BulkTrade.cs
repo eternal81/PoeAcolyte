@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 using PoeAcolyte.Helpers;
 using PoeAcolyte.UI;
@@ -10,8 +11,9 @@ namespace PoeAcolyte.DataTypes
         protected override Control StatusControl => _bulkTradeControl.lblStatus;
 
         public override UserControl GetUserControl => _bulkTradeControl;
+        
         private readonly BulkTradeControl _bulkTradeControl;
-
+        protected override Control IsBusyControl => _bulkTradeControl.pbTradeDirection;
         public BulkTrade(PoeLogEntry entry) : base(entry)
         {
             _bulkTradeControl = new BulkTradeControl();

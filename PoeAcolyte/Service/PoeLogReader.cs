@@ -69,7 +69,7 @@ namespace PoeAcolyte.Service
                     OnNewLogEntry(entry);
                 }
             }
-            catch (Exception exception)
+            catch (FileNotFoundException exception)
             {
                 Program.Log.Debug("PoeLogReader (LogTimeOnElapsed) - Exception: {exception}",exception.Message);
                 Program.Log.Debug(exception.StackTrace);

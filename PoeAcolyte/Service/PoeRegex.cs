@@ -154,7 +154,7 @@ namespace PoeAcolyte.Service
         /// </summary>
         public static readonly Regex[] YouJoinList =
         {
-            /* ENG */ new Regex(@"(.*) : You have entered (?<Area>.*?).", RegexOptions.Compiled)
+            /* ENG */ new Regex(@"(.*) : You have entered (?<Area>.*).", RegexOptions.Compiled)
             // TODO add language specific regex
         };
         

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using PoeAcolyte.UI;
 
 namespace PoeAcolyte.DataTypes
 {
@@ -14,13 +13,21 @@ namespace PoeAcolyte.DataTypes
         private ITrade.TradeStatus _activeTradeStatus;
         private readonly ToolStripMenuItem _playersMenu = new("Players");
         private PoeLogEntry _activeEntry;
-        private readonly List<PoeLogEntry> _logEntries = new();     
+        private readonly List<PoeLogEntry> _logEntries = new();
         private readonly Timer _clickTimer = new Timer() {Interval = SystemInformation.DoubleClickTime};
-
-        public bool IsBusy { get; set; }
+        protected abstract Control IsBusyControl { get; }
+        private bool _isBusy;
+        public virtual bool IsBusy {
+            get => _isBusy;
+            set
+            {
+                _isBusy = value;
+                IsBusyControl.BackColor = _isBusy ? Color.Red : Color.Green;
+            }
+        }
         public event EventHandler Disposed;
 
-        protected ITrade.TradeStatus ActiveTradeStatus
+        public ITrade.TradeStatus ActiveTradeStatus
         {
             get => _activeTradeStatus;
             set
@@ -67,7 +74,7 @@ namespace PoeAcolyte.DataTypes
         protected Trade(PoeLogEntry entry)
         {
             _logEntries.Add(entry);
-
+            
             _clickTimer.Tick += (sender, args) =>
             {
                 _clickTimer.Stop();
@@ -81,12 +88,11 @@ namespace PoeAcolyte.DataTypes
 
         public virtual void Dispose()
         {
-            
             GetUserControl.Dispose();
         }
-        
+
         protected void BindClickControl()
-        {
+        {// TODO make an extension or roll into userform controls?
             foreach (Control control in GetUserControl.Controls)
             {
                 control.Click += (sender, args) => { _clickTimer.Start(); };
@@ -120,17 +126,19 @@ namespace PoeAcolyte.DataTypes
             _logEntries.Remove(entry);
             var remainingTrades = _logEntries.Where(logEntry =>
                 logEntry.PoeLogEntryType != IPoeLogEntry.PoeLogEntryTypeEnum.Whisper).ToArray();
-            if (remainingTrades.Any() && !bRemoveAll)
+            
+            if (!remainingTrades.Any() || bRemoveAll)
             {
-                // TODO causing program to hang
-                var t = _playersMenu.DropDownItems.Find(entry.Player, false);
-                if (t.Any())
-                    _playersMenu.DropDownItems.Remove(t.First());
-                _activeEntry = remainingTrades.First();
-                UpdateControls();
-            }
-            else
                 Dispose();
+                return;
+            }
+
+            // TODO causing program to hang
+            var t = _playersMenu.DropDownItems.Find(entry.Player, false);
+            if (t.Any())
+                _playersMenu.DropDownItems.Remove(t.First());
+            _activeEntry = remainingTrades.First();
+            UpdateControls();
         }
 
         protected bool CheckWhisper(PoeLogEntry entry)
@@ -158,7 +166,7 @@ namespace PoeAcolyte.DataTypes
             };
         }
 
-        
+
         protected Action DoubleClick()
         {
             return ActiveTradeStatus switch
@@ -179,17 +187,22 @@ namespace PoeAcolyte.DataTypes
             ActiveTradeStatus = ITrade.TradeStatus.AskedToWait;
         };
 
-        protected Action Invite => () =>
+        protected virtual Action Invite => () =>
         {
-            //Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Ready for pickup");
-            Program.GameBroker.Service.SendCommandToClient($"/invite {ActiveLogEntry.Player}");
+            Program.GameBroker.Service.SendCommandToClient(new[] {
+                $"@{ActiveLogEntry.Player} Ready for pickup", 
+                $"/invite {ActiveLogEntry.Player}"
+            });
             
             ActiveTradeStatus = ITrade.TradeStatus.Invited;
+            //Program.GameBroker.Service.SendCommandToClient($"/invite {ActiveLogEntry.Player}");
         };
+
         protected Action Hideout => () =>
         {
             Program.GameBroker.Service.SendCommandToClient($"/hideout {ActiveLogEntry.Player}");
         };
+
         protected Action DoTrade => () =>
         {
             Program.GameBroker.Service.SendCommandToClient($"/tradewith {ActiveLogEntry.Player}");
@@ -199,13 +212,17 @@ namespace PoeAcolyte.DataTypes
         protected Action NoStock => () =>
         {
             Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Sold out");
+            ActiveTradeStatus = ITrade.TradeStatus.OutOfStock;
             RemoveTrade(_activeEntry);
         };
 
         protected Action Decline => () =>
         {
-            Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} No thanks");
-            Program.GameBroker.Service.SendCommandToClient($"/kick {ActiveLogEntry.Player}");
+            Program.GameBroker.Service.SendCommandToClient(new[] {
+                $"@{ActiveLogEntry.Player} No thanks", 
+                $"/kick {ActiveLogEntry.Player}"
+            });
+            ActiveTradeStatus = ITrade.TradeStatus.Declined;
             RemoveTrade(_activeEntry);
         };
 
@@ -216,7 +233,11 @@ namespace PoeAcolyte.DataTypes
 
         protected Action TradeComplete => () =>
         {
-            Program.GameBroker.Service.SendCommandToClient($"@{ActiveLogEntry.Player} Thank you and Good Luck");
+            Program.GameBroker.Service.SendCommandToClient(new[] {
+                $"@{ActiveLogEntry.Player} Thank you and Good Luck", 
+                $"/kick {ActiveLogEntry.Player}"
+            });
+            ActiveTradeStatus = ITrade.TradeStatus.TradeComplete;
             RemoveTrade(_activeEntry);
         };
 
@@ -260,6 +281,12 @@ namespace PoeAcolyte.DataTypes
         {
             _logEntries.Add(entry);
             _playersMenu.DropDownItems.Add(AddPlayerToMenu(entry, logEntry => ActiveLogEntry = logEntry, suffix));
+            // TODO add any suffix (other) information in the trade request here?
+        }
+
+        protected virtual void OnDisposed()
+        {
+            Disposed?.Invoke(this, EventArgs.Empty);
         }
     }
 }

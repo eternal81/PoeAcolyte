@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Timers;
-using WindowsInput.Events;
+using AutoIt;
+using Timer = System.Timers.Timer;
 
 namespace PoeAcolyte.Service
 {
@@ -80,7 +82,7 @@ namespace PoeAcolyte.Service
         /// Set POE client to foreground if Process is not null
         /// </summary>
         /// <returns>true if successful, false if no process</returns>
-        private bool FocusPoe()
+        public bool FocusPoe()
         {
             if (_poeProcess == null) return false;
             WIN32.SetForegroundWindow(GetPoeProcess().MainWindowHandle);
@@ -93,16 +95,41 @@ namespace PoeAcolyte.Service
         /// <param name="command">Text to send to POE (single line only)</param>
         /// <param name="waitTime">Time in milliseconds between action commands</param>
         /// <returns>true if executed to end, false otherwise</returns>
-        public bool SendCommandToClient(string command, int waitTime = 50)
+        public bool SendCommandToClient(string command, int waitTime = 100)
+        {
+            return SendCommandToClient(new[] {command});
+            // if (!FocusPoe()) return false;
+            // WindowsInput.Simulate.Events()
+            //     .Wait(waitTime*2)
+            //     .Click(KeyCode.Enter).Wait(waitTime)
+            //     .Click(command).Wait(waitTime)
+            //     .Click(KeyCode.Enter).Wait(waitTime)
+            //     .Wait(waitTime*2)
+            //     .Invoke()
+            //     ;
+            // return true;
+        }
+        /// <summary>
+        /// Send string of text to chat console in POE
+        /// </summary>
+        /// <param name="command">Text to send to POE (single line only)</param>
+        /// <param name="waitTime">Time in milliseconds between action commands</param>
+        /// <returns>true if executed to end, false otherwise</returns>
+        public bool SendCommandToClient(string[] command, int waitTime = 100)
         {
             if (!FocusPoe()) return false;
-            WindowsInput.Simulate.Events()
-                .Wait(waitTime)
-                .Click(KeyCode.Enter).Wait(waitTime)
-                .Click(command).Wait(waitTime)
-                .Click(KeyCode.Enter).Wait(waitTime)
-                .Invoke()
-                ;
+            AutoItX.AutoItSetOption("SendKeyDelay", 1);
+            AutoItX.AutoItSetOption("SendKeyDownDelay", 1);
+            foreach (var s in command)
+            {
+                Thread.Sleep(waitTime);
+                AutoItX.Send("{Enter}");
+                Thread.Sleep(waitTime);
+                AutoItX.Send(s);
+                AutoItX.Send("{Enter}");
+                Thread.Sleep(waitTime);
+            }
+            
             return true;
         }
 
