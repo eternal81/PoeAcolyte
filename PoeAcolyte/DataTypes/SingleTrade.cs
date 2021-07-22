@@ -27,6 +27,9 @@ namespace PoeAcolyte.DataTypes
             // add single trade only context menu items
             var menuItems = _singleTradeControl.ContextMenuStrip.Items;
             menuItems.Add(MakeMenuItem("Show Cell", ShowCellHighlight));
+            
+            _CellHighlight ??= new CellHighlight(ActiveLogEntry);
+            _CellHighlight.Visible = false;
         }
 
         public override void UpdateControls()
@@ -74,14 +77,16 @@ namespace PoeAcolyte.DataTypes
             ShowCellHighlight();
         };
 
-        protected Action ShowCellHighlight => () => { _CellHighlight ??= new CellHighlight(ActiveLogEntry); };
+        protected Action ShowCellHighlight => () => { _CellHighlight.Visible = true; };
 
         public override bool TakeMouseClick(MouseEventArgs e)
         {
-            if (_CellHighlight is null ||
-                !new Rectangle(_CellHighlight.Location, _CellHighlight.Size).Contains(e.Location)) return false;
-            _CellHighlight.Dispose();
-            return true;
+            if (_CellHighlight is not null && _CellHighlight.Visible && new Rectangle(_CellHighlight.Location, _CellHighlight.Size).Contains(e.Location))
+            {
+                _CellHighlight.Visible = false;
+                return true;
+            } 
+            return false;
 
         }
 

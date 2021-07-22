@@ -69,7 +69,6 @@ namespace PoeAcolyte
             // 
             // tradesPanel
             // 
-            this.tradesPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tradesPanel.Location = new System.Drawing.Point(120, 178);
             this.tradesPanel.Name = "tradesPanel";
             this.tradesPanel.Size = new System.Drawing.Size(277, 95);

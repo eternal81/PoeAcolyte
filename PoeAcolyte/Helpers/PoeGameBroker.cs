@@ -23,6 +23,7 @@ namespace PoeAcolyte.Helpers
         public PoeGameBroker()
         {
             Settings = PoeSettings.Load();
+            Hook.GlobalEvents().MouseClick += OnMouseClick;
             // Service = new PoeGameService();
             // LogReader = new PoeLogReader();
         }
@@ -187,8 +188,6 @@ namespace PoeAcolyte.Helpers
                     Program.Log.Verbose("PoeGameBroker - Client {conn}",
                         args.IsConnected ? "connected" : "disconnected");
                     LogReader.IsRunning = args.IsConnected;
-                    if (args.IsConnected) Hook.GlobalEvents().MouseClick += OnMouseClick;
-                    else Hook.GlobalEvents().MouseClick -= OnMouseClick;
                 };
             }
         }
