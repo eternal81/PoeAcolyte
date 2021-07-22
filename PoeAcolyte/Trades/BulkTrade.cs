@@ -1,10 +1,10 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
+using PoeAcolyte.DataTypes;
 using PoeAcolyte.Helpers;
 using PoeAcolyte.UI;
 
-namespace PoeAcolyte.DataTypes
+namespace PoeAcolyte.Trades
 {
     public class BulkTrade : Trade
     {
@@ -25,10 +25,10 @@ namespace PoeAcolyte.DataTypes
             CheckWhisper(entry);
         }
 
-        public override void UpdateControls()
+        protected override void UpdateControls()
         {
-            _bulkTradeControl.pbBuyUnit.Image = Converter.FromPriceString(ActiveLogEntry.BuyPriceUnits);
-            _bulkTradeControl.pbPriceUnit.Image = Converter.FromPriceString(ActiveLogEntry.PriceUnits);
+            _bulkTradeControl.pbBuyUnit.Image = PoeConverter.FromPriceString(ActiveLogEntry.BuyPriceUnits);
+            _bulkTradeControl.pbPriceUnit.Image = PoeConverter.FromPriceString(ActiveLogEntry.PriceUnits);
             _bulkTradeControl.lblInfo.Text = ActiveLogEntry.ToString();
             _bulkTradeControl.lblBuyAmount.Text = ActiveLogEntry.BuyPriceAmount.ToString();
             _bulkTradeControl.lblPriceAmount.Text = ActiveLogEntry.PriceAmount.ToString();

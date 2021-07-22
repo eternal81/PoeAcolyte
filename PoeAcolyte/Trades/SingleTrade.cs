@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using PoeAcolyte.DataTypes;
 using PoeAcolyte.Helpers;
 using PoeAcolyte.UI;
 
-namespace PoeAcolyte.DataTypes
+namespace PoeAcolyte.Trades
 {
     public class SingleTrade : Trade
     {
@@ -32,9 +33,9 @@ namespace PoeAcolyte.DataTypes
             _CellHighlight.Visible = false;
         }
 
-        public override void UpdateControls()
+        protected override void UpdateControls()
         {
-            _singleTradeControl.pbPriceUnit.Image = Converter.FromPriceString(ActiveLogEntry.PriceUnits);
+            _singleTradeControl.pbPriceUnit.Image = PoeConverter.FromPriceString(ActiveLogEntry.PriceUnits);
             _singleTradeControl.lblInfo.Text = ActiveLogEntry.ToString();
             _singleTradeControl.lblPriceAmount.Text = ActiveLogEntry.PriceAmount.ToString();
             _singleTradeControl.toolTips.SetToolTip(_singleTradeControl.lblInfo, ActiveLogEntry.Raw);

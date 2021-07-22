@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using Gma.System.MouseKeyHook;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Service;
+using PoeAcolyte.Trades;
 
 namespace PoeAcolyte.Helpers
 {

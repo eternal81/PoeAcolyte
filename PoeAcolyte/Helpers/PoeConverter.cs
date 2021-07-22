@@ -3,12 +3,13 @@ using System.Drawing;
 using PoeAcolyte.DataTypes;
 using PoeAcolyte.Resources;
 using Region = PoeAcolyte.Resources.Region;
+// ReSharper disable StringLiteralTypo
 
 namespace PoeAcolyte.Helpers
 {
-    public static class Converter
+    public static class PoeConverter
     {
-        public static Dictionary<string, Image> StringPriceToImage = new()
+        private static readonly Dictionary<string, Image> StringPriceToImage = new()
         {
             {"c", CurrencyImages.CurrencyRerollRare},
             {"chaos", CurrencyImages.CurrencyRerollRare},
@@ -151,7 +152,7 @@ namespace PoeAcolyte.Helpers
 
         public static Image FromPriceString(string input)
         {
-            input = input is null ? string.Empty : input?.ToLower();
+            input = input is null ? string.Empty : input.ToLower();
             return StringPriceToImage.ContainsKey(input) ? StringPriceToImage[input] : CurrencyImages.logo;
         }
 
