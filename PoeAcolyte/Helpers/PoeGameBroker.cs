@@ -73,10 +73,11 @@ namespace PoeAcolyte.Helpers
         /// <param name="tradeControl"></param>
         private void AddTrade(ITrade tradeControl)
         {
+            
             tradeControl.Disposed += (_, _) =>
             {
                 // TODO add a memory of trades that were out of stock/sold etc to ignore for a given timeframe
-                // OutOfStock, TradeComplete
+                // OutOfStock, TradeComplete, Declined
                 TradePanel.Controls.Remove(tradeControl.GetUserControl);
                 ActiveTrades.Remove(tradeControl);
             };

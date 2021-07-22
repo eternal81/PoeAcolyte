@@ -89,6 +89,7 @@ namespace PoeAcolyte.DataTypes
         public virtual void Dispose()
         {
             GetUserControl.Dispose();
+            Disposed?.Invoke(this, EventArgs.Empty);
         }
 
         protected void BindClickControl()
@@ -284,9 +285,5 @@ namespace PoeAcolyte.DataTypes
             // TODO add any suffix (other) information in the trade request here?
         }
 
-        protected virtual void OnDisposed()
-        {
-            Disposed?.Invoke(this, EventArgs.Empty);
-        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Timers;
@@ -48,7 +49,7 @@ namespace PoeAcolyte.Service
             _lastLogIndex = FindLogEOF(); // Set our last index as end of file (so we don't scan entire history)
             _logTimer = new Timer()
             {
-                Interval = 1000,
+                Interval = 2000,
                 Enabled = true
             };
             _logTimer.Elapsed += LogTimerOnElapsed;
@@ -92,6 +93,7 @@ namespace PoeAcolyte.Service
                 Program.Log.Debug("PoeLogReader (FindLogEof) - Exception: {exception}",e.Message);
                 return -1;
             }
+           //return 0;
         }
 
         /// <summary>
@@ -142,23 +144,34 @@ namespace PoeAcolyte.Service
         /// <returns>new entries</returns>
         private IEnumerable<string> ReadNewLines()
         {
-            var lines = new List<string>();
-            var currentPosition = _lastLogIndex;
-            _lastLogIndex = FindLogEOF();
-
-            if (currentPosition >= _lastLogIndex) return lines; //no new entries
-
-            using var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            file.Position = currentPosition;
-            using var reader = new StreamReader(file);
-
-            while (!reader.EndOfStream)
+            try
             {
-                var line = reader.ReadLine();
-                if (!string.IsNullOrEmpty(line)) lines.Add(line);
+                using var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+                var lines = new List<string>();
+                var currentPosition = _lastLogIndex;
+                _lastLogIndex = file.Length - 1; //FindLogEOF();
+
+                if (currentPosition >= _lastLogIndex) return lines; //no new entries
+
+                //using var file = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                file.Position = currentPosition;
+                using var reader = new StreamReader(file);
+
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    if (!string.IsNullOrEmpty(line)) lines.Add(line);
+                }
+
+                return lines;
+            }
+            catch (Exception e)
+            {
+                Debug.Print(e.Message);
             }
 
-            return lines;
+            return new[] {""};
         }
 
         /// <summary>
