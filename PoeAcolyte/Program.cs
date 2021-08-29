@@ -38,11 +38,11 @@ namespace PoeAcolyte
         [STAThread]
         static void Main()
         {
-            GameBroker = new PoeGameBroker()
-            {
-                LogReader = new PoeLogReader(),
-                Service = new PoeGameService(),
-            };
+            // GameBroker = new PoeGameBroker()
+            // {
+            //     LogReader = new PoeLogReader(),
+            //     Service = new PoeGameService(),
+            // };
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Overlay());

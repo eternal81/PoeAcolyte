@@ -17,9 +17,7 @@ namespace PoeAcolyte.Service
             public PoeLogEntry LogEntry { get; set; }
             public override string ToString()
             {
-                string ret = LogEntry.PoeLogEntryType.ToString() + " (";
-                ret += LogEntry.Player + ") --- " + LogEntry.Raw;
-                return ret;
+                return $"{LogEntry.PoeLogEntryType} ({LogEntry.Player}) --- {LogEntry.Raw}";
             }
         }
         /// <summary>

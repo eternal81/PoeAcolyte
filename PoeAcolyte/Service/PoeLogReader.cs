@@ -46,7 +46,7 @@ namespace PoeAcolyte.Service
         public PoeLogReader(string filePath = DEFAULT_PATH)
         {
             _filePath = filePath;
-            _lastLogIndex = FindLogEOF(); // Set our last index as end of file (so we don't scan entire history)
+            _lastLogIndex = FindLogEOF(); // don't scan entire log history
             _logTimer = new Timer()
             {
                 Interval = 2000,
@@ -110,7 +110,6 @@ namespace PoeAcolyte.Service
             {
                 case IPoeLogEntry.PoeLogEntryTypeEnum.Whisper:
                     Whisper?.Invoke(this, eventArgs);
-                    
                     break;
                 case IPoeLogEntry.PoeLogEntryTypeEnum.PricedTrade:
                     PricedTrade?.Invoke(this, eventArgs);

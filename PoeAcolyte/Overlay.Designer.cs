@@ -49,9 +49,9 @@ namespace PoeAcolyte
             // 
             // btnClose
             // 
-            this.btnClose.Location = new System.Drawing.Point(585, 116);
+            this.btnClose.Location = new System.Drawing.Point(40, 66);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(111, 70);
+            this.btnClose.Size = new System.Drawing.Size(57, 31);
             this.btnClose.TabIndex = 0;
             this.btnClose.Text = "Close";
             this.btnClose.UseVisualStyleBackColor = true;
@@ -65,6 +65,7 @@ namespace PoeAcolyte
             this.btnTest.TabIndex = 1;
             this.btnTest.Text = "Test";
             this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Visible = false;
             this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // tradesPanel
