@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Timers;
 using PoeAcolyte.DataTypes;
 
 namespace PoeAcolyte.Observers
 {
+    /// <summary>
+    /// Timer is used over filesystemwatcher since game does not flush after writing to
+    /// client file urgo no OS events fired for a file change
+    /// </summary>
     public class ClientLogObserver
     {
         public event EventHandler<ClientLogEventArgs> NewLogEntry;
@@ -14,6 +18,7 @@ namespace PoeAcolyte.Observers
         private readonly string _filePath;
         private const string DEFAULT_PATH = @"C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\Client.txt";
         private long _lastLogIndex;
+        private Timer _logTimer;
 
         /// <summary>
         ///  Default constructor
@@ -25,12 +30,12 @@ namespace PoeAcolyte.Observers
         {
             _filePath = filePath;
             _lastLogIndex = FindLog_EOF();
-            var logTimer = new Timer()
+            _logTimer = new Timer()
             {
                 Enabled = autoStart,
                 Interval = pollingRate
             };
-            logTimer.Elapsed += LogTimerOnElapsed;
+            _logTimer.Elapsed += LogTimerOnElapsed;
         }
 
         /// <summary>
@@ -40,28 +45,23 @@ namespace PoeAcolyte.Observers
         /// <param name="e"></param>
         private void LogTimerOnElapsed(object sender, ElapsedEventArgs e)
         {
-            var newEntries = GetNewLogEntries()? // null check
-                .Split("\r\n".ToCharArray()); // separate by new line
-                //.Where(s => s.Length>2); // filter out empty lines
+            var newEntries = GetNewLogEntries();
 
             if (newEntries is null) return;
-                // foreach (var str in newEntries)
-                // {
-                //     Debug.Print(str);
-                // }
-            foreach (var strEntry in newEntries)
-            {
-                Debug.Print(strEntry);
-                OnNewLogEntry(strEntry);
+
+            foreach (var entry in newEntries)
+            {            
+                PoeLogEntry logEntry = new PoeLogEntry(entry);
+                if (!logEntry.IsValid) continue;
+                NewLogEntry?.Invoke(entry, new ClientLogEventArgs(logEntry));
             }
-
         }
-
+        
         /// <summary>
         /// Find what has changed 
         /// </summary>
         /// <returns>string of anything past last index</returns>
-        private string GetNewLogEntries()
+        private IEnumerable<string> GetNewLogEntries()
         {
             try
             {
@@ -73,7 +73,13 @@ namespace PoeAcolyte.Observers
 
                 file.Position = currentPosition;
                 using var reader = new StreamReader(file);
-                return reader.ReadToEnd();
+                var lines = new List<string>();
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    if (!string.IsNullOrEmpty(line)) lines.Add(line);
+                }
+                return lines;
             }
             catch (FileNotFoundException exception)
             {
@@ -83,23 +89,6 @@ namespace PoeAcolyte.Observers
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Event Invoker for new log entries
-        /// </summary>
-        /// <param name="entry">entry to be passed on as EventArgs</param>
-        /// <exception cref="ArgumentOutOfRangeException">message type not specified</exception>
-        private void OnNewLogEntry(string entry)
-        {
-// Debug.Print($"Invoking: {entry}");
-            PoeLogEntry logEntry = new PoeLogEntry(entry);
-            if (logEntry.IsValid)
-            {
-                
-                // invoke
-                NewLogEntry?.Invoke(entry, new ClientLogEventArgs(logEntry));
-            }
         }
 
         /// <summary>

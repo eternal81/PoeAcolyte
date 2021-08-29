@@ -24,16 +24,9 @@ namespace PoeAcolyte
 
         private void ObserverOnNewLogEntry(object sender, ClientLogEventArgs e)
         {
-
-               
-                Debug.Print(e.LogEntry.ToString());
-                lblInfo.Text = e.LogEntry.ToString();
-
-        }
-
-        private void WatchOnChanged(object sender, FileSystemEventArgs e)
-        {
-            Debug.Print(e.ChangeType.ToString());
+            Debug.Print(e.LogEntry.ToString());
+            lblInfo.Invoke(new Action(() => lblInfo.Text += e.LogEntry.ToString()));
+            //lblInfo.Text = e.LogEntry.ToString();
         }
 
         private void OnClose(object sender, EventArgs e)
